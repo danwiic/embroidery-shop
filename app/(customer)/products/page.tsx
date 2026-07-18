@@ -141,7 +141,7 @@ const ProductsContent = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
   }, []);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);

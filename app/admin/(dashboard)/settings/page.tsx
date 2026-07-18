@@ -26,6 +26,7 @@ const SettingsContent = () => {
       .then((data) => {
         setForm((prev) => ({ ...prev, ...data }));
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

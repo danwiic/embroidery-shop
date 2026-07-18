@@ -25,6 +25,7 @@ const UsersContent = () => {
     fetch("/api/admin/users")
       .then((r) => r.json())
       .then(setUsers)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 

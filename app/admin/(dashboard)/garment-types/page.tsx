@@ -26,6 +26,7 @@ const GarmentTypesContent = () => {
     fetch("/api/admin/garment-types")
       .then((r) => r.json())
       .then(setTypes)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 

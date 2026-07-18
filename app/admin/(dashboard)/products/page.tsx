@@ -53,12 +53,13 @@ const ProductsContent = () => {
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => setProducts(Array.isArray(data) ? data : data.data ?? []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchProducts();
-    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
   }, []);
 
   const deleteProduct = async (id: number) => {

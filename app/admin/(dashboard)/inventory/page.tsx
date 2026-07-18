@@ -46,6 +46,7 @@ const InventoryContent = () => {
     fetch("/api/admin/products")
       .then((r) => r.json())
       .then((data) => setProducts(data.data ?? []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 

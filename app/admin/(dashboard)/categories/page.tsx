@@ -28,6 +28,7 @@ const CategoriesContent = () => {
     fetch("/api/admin/categories")
       .then((r) => r.json())
       .then(setCategories)
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 

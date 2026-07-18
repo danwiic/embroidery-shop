@@ -77,7 +77,8 @@ const MeasurementsForm = () => {
       .then((cats) => {
         const match = cats.find((c: any) => c.slug === slug);
         if (match?.sizeGuideUrl) setSizeGuideUrl(match.sizeGuideUrl);
-      });
+      })
+      .catch(() => {});
   }, [slug]);
 
   const allFilled = fields.every((f) => measurements[f.key]?.trim());

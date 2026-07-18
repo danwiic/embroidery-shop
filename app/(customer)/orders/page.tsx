@@ -23,7 +23,7 @@ const OrdersContent = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/orders").then((r) => r.json()).then(setOrders).finally(() => setLoading(false));
+    fetch("/api/orders").then((r) => r.json()).then(setOrders).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;

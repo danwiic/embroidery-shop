@@ -25,8 +25,9 @@ const CheckoutPage = () => {
       .then((r) => r.json())
       .then((data) => {
         setItems(data.items ?? []);
-        setLoading(false);
-      });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const unitPrice = (item: any) => Number(item.variant?.price ?? item.product.price);

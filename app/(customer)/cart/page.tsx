@@ -27,7 +27,9 @@ const CartContent = () => {
   const fetchCart = () => {
     fetch("/api/cart")
       .then((r) => r.json())
-      .then((data) => { setItems(data.items ?? []); setLoading(false); });
+      .then((data) => { setItems(data.items ?? []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchCart(); }, []);

@@ -22,7 +22,8 @@ const Confirmation = () => {
     if (orderId) {
       fetch(`/api/orders/${orderId}`)
         .then((r) => r.json())
-        .then(setOrder);
+        .then(setOrder)
+        .catch(() => {});
     }
   }, [orderId]);
 

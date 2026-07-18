@@ -23,6 +23,7 @@ const StockLogsContent = () => {
     fetch("/api/admin/stock-logs")
       .then((r) => r.json())
       .then(setLogs)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

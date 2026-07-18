@@ -87,6 +87,7 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
         setSelectedColor(inStock?.color);
         setSelectedSize(inStock?.size);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
 
     // Fetch reviews + check if user can review
