@@ -4,23 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 const main = async () => {
-  // Seed GarmentTypes (for alteration service)
-  const garmentTypes = [
-    { name: "Pants", slug: "pants" },
-    { name: "Military Uniform", slug: "military-uniform" },
-    { name: "Shirt", slug: "shirt" },
-    { name: "Shorts", slug: "shorts" },
-  ];
-
-  for (const gt of garmentTypes) {
-    await prisma.garmentType.upsert({
-      where: { slug: gt.slug },
-      update: {},
-      create: gt,
-    });
-  }
-
-  // Seed Categories (for ready-made products)
+  // Seed Categories (for ready-made products and alteration service)
   const categories = [
     { name: "Military Uniforms", slug: "military-uniforms" },
     { name: "Shirts", slug: "shirts" },
@@ -28,6 +12,8 @@ const main = async () => {
     { name: "Shorts", slug: "shorts" },
     { name: "Caps", slug: "caps" },
     { name: "Belts", slug: "belts" },
+    { name: "Military Uniform", slug: "military-uniform" },
+    { name: "Shirt", slug: "shirt" },
   ];
 
   for (const cat of categories) {

@@ -58,14 +58,6 @@ model User {
   createdAt DateTime @default(now())
 }
 
-model GarmentType {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  slug      String   @unique
-  deletedAt DateTime?
-  orders    Order[]
-}
-
 model Category {
   id           Int       @id @default(autoincrement())
   name         String    @unique
@@ -73,6 +65,7 @@ model Category {
   sizeGuideUrl String?
   deletedAt    DateTime?
   products     Product[]
+  orders       Order[]
 }
 
 model Product {
@@ -140,8 +133,8 @@ model Order {
   serviceType     ServiceType
 
   // Alteration-specific
-  garmentType     GarmentType?    @relation(fields: [garmentTypeId], references: [id])
-  garmentTypeId   Int?
+  category        Category?       @relation(fields: [categoryId], references: [id])
+  categoryId      Int?
   garmentPhotoUrl String?
   measurements    Measurement?
   fitPreference   FitPreference?
@@ -209,7 +202,7 @@ model StatusHistory {
 }
 
 model ShopSetting {
-  id    Int    @id @default(autoincrement())
+  id    String @id @default(cuid())
   key   String @unique
   value String
 }
@@ -247,12 +240,6 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
-}
-
-model ShopSetting {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
 }
 
 model Review {

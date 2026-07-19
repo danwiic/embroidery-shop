@@ -3,7 +3,26 @@ import { prisma } from "@/lib/prisma";
 // ── Categories ──
 
 export const getCategories = () =>
-  prisma.category.findMany({ orderBy: { name: "asc" } });
+  prisma.category.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } });
+
+export const getCategoriesWithProducts = async () => {
+  const cats = await prisma.category.findMany({
+    where: { deletedAt: null },
+    include: {
+      _count: { select: { products: { where: { deletedAt: null } } } },
+      products: {
+        where: { deletedAt: null },
+        take: 1,
+        orderBy: { name: "asc" },
+        select: { imageUrl: true },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+  return cats
+    .filter((c) => c._count.products > 0)
+    .map((c) => ({ ...c, productImageUrl: c.products[0]?.imageUrl ?? null }));
+};
 
 export const createCategory = (data: { name: string; slug: string; sizeGuideUrl?: string }) =>
   prisma.category.create({ data });
@@ -17,25 +36,6 @@ export const deleteCategory = async (id: number) => {
     throw new Error("Cannot delete category with existing products");
   }
   return prisma.category.update({ where: { id }, data: { deletedAt: new Date() } });
-};
-
-// ── Garment Types ──
-
-export const getGarmentTypes = () =>
-  prisma.garmentType.findMany({ orderBy: { name: "asc" } });
-
-export const createGarmentType = (data: { name: string; slug: string }) =>
-  prisma.garmentType.create({ data });
-
-export const updateGarmentType = (id: number, data: { name?: string; slug?: string }) =>
-  prisma.garmentType.update({ where: { id }, data });
-
-export const deleteGarmentType = async (id: number) => {
-  const orders = await prisma.order.count({ where: { garmentTypeId: id, deletedAt: null } });
-  if (orders > 0) {
-    throw new Error("Cannot delete garment type with existing orders");
-  }
-  return prisma.garmentType.update({ where: { id }, data: { deletedAt: new Date() } });
 };
 
 // ── Products ──

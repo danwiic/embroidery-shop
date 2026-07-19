@@ -20,6 +20,7 @@ const NotificationsPage = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [marking, setMarking] = useState(false);
 
   const fetchNotifs = () => {
     fetch("/api/notifications")
@@ -41,8 +42,10 @@ const NotificationsPage = () => {
   };
 
   const markAllRead = async () => {
+    setMarking(true);
     await fetch("/api/notifications/read-all", { method: "PUT" });
-    fetchNotifs();
+    await fetchNotifs();
+    setMarking(false);
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -54,8 +57,8 @@ const NotificationsPage = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-semibold text-navy">Notifications</h1>
         {unreadCount > 0 && (
-          <Button size="sm" variant="outlined" onClick={markAllRead}>
-            Mark all as read ({unreadCount})
+          <Button size="sm" variant="outlined" onClick={markAllRead} disabled={marking}>
+            {marking ? "Marking..." : `Mark all as read (${unreadCount})`}
           </Button>
         )}
       </div>

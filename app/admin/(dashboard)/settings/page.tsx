@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useToast } from "@/lib/contexts/toast";
+import { PageLoader } from "@/components/ui/page-loader";
 import { Save } from "lucide-react";
 
 const SettingsContent = () => {
@@ -16,6 +17,8 @@ const SettingsContent = () => {
     shopPhone: "",
     shopAddress: "",
     aboutText: "",
+    logoUrl: "",
+    resizingFee: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,7 +49,7 @@ const SettingsContent = () => {
     setSaving(false);
   };
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div>
@@ -60,8 +63,10 @@ const SettingsContent = () => {
 
       <Card className="p-6 space-y-5">
         <Input label="Shop Name" value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder="Jendave Embroidery Shop" />
+        <Input label="Logo URL (Cloudinary Image URL)" value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://res.cloudinary.com/..." />
         <Input label="Contact Email" type="email" value={form.shopEmail} onChange={(e) => setForm({ ...form, shopEmail: e.target.value })} placeholder="shop@jendave.com" />
         <Input label="Contact Phone" value={form.shopPhone} onChange={(e) => setForm({ ...form, shopPhone: e.target.value })} placeholder="+63 912 345 6789" />
+        <Input label="Resizing Service Fee (₱)" value={form.resizingFee} onChange={(e) => setForm({ ...form, resizingFee: e.target.value })} placeholder="250" />
         <div className="space-y-1">
           <label className="block text-sm font-medium text-foreground">Shop Address</label>
           <textarea

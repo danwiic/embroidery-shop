@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Scissors, Shirt, ShoppingCart, Package, ArrowRight } from "lucide-react";
+import { SiteLogo } from "@/components/site-logo";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ProductMarquee } from "@/components/product-marquee";
@@ -20,11 +21,16 @@ const LandingContent = () => {
   const { data: session } = useSession();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
+  const [shopName, setShopName] = useState("JENDAVE");
 
   useEffect(() => {
     fetch("/api/products?take=4")
       .then((r) => r.json())
       .then(setFeatured)
+      .catch(() => {});
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => { if (data.shopName) setShopName(data.shopName); })
       .catch(() => {});
   }, []);
 
@@ -45,7 +51,7 @@ const LandingContent = () => {
           Embroidery & Alterations Shop
         </p>
         <h1 className="text-5xl font-bold text-navy tracking-wider relative inline-block">
-          JENDAVE
+          {shopName}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-gold rounded-full" />
         </h1>
         <p className="text-base text-muted mt-6 max-w-md">
@@ -125,7 +131,7 @@ const LandingContent = () => {
         </div>
       </section>
 
-      {session && featured.length > 0 && (
+      {featured.length > 0 && (
         <section className="bg-gradient-to-b from-gold/[0.02] to-surface border-t border-border py-16 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-6">
@@ -142,7 +148,7 @@ const LandingContent = () => {
                 <Link key={p.id} href={`/products/${p.id}`} className="group bg-white rounded-xl shadow-card p-4 hover:shadow-raised transition-all border border-transparent hover:border-gold/30">
                   <div className="aspect-square bg-surface rounded-lg mb-3 flex items-center justify-center text-muted text-sm overflow-hidden group-hover:ring-1 group-hover:ring-gold/30 transition-all">
                     {p.imageUrl ? (
-                      <div className="relative w-full h-full"><Image src={p.imageUrl} alt={p.name} fill className="object-cover" /></div>
+                      <div className="relative w-full h-full"><Image src={p.imageUrl} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" /></div>
                     ) : (
                       "No image"
                     )}

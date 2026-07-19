@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageLoader } from "@/components/ui/page-loader";
 import { ClipboardList, Package } from "lucide-react";
 
 type Variant = {
@@ -106,7 +107,7 @@ const InventoryContent = () => {
   };
 
   if (loading)
-    return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+    return <PageLoader />;
 
   return (
     <div>

@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { PageLoader } from "@/components/ui/page-loader";
 import { ArrowLeft, Plus, Minus, Star, Mail, Bell, X, Send, Loader2 } from "lucide-react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Card } from "@/components/ui/card";
@@ -110,7 +111,7 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
     }
   }, [id, session]);
 
-  if (loading) return <p className="text-muted">Loading...</p>;
+  if (loading) return <PageLoader />;
   if (!product) return <p className="text-red-600">Product not found</p>;
 
   const baseVariant: ProductVariant | null = product.color || product.size

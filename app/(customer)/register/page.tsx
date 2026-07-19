@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { SiteLogo } from "@/components/site-logo";
 import { AlertCircle, Eye, EyeOff, Check, X } from "lucide-react";
 
 const RegisterContent = () => {
@@ -62,9 +63,7 @@ const RegisterContent = () => {
     <div className="flex-1 flex items-center justify-center bg-surface">
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-navy tracking-wide">
-            JENDAVE
-          </h1>
+          <SiteLogo href="/" className="text-2xl font-bold text-navy tracking-wide" />
           <p className="text-sm text-muted mt-1">Create your account</p>
         </div>
         <Card className="p-6">

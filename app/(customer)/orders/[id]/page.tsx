@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, XCircle, AlertTriangle } from "lucide-react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageLoader } from "@/components/ui/page-loader";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,7 @@ type Order = {
   deliveryAddress?: string;
   pickupDate?: string;
   estimatedCompletion?: string;
-  garmentType?: { name: string };
+  category?: { name: string };
   fitPreference?: string;
   createdAt: string;
   items?: { id: string; quantity: number; price: string; product: { name: string } }[];
@@ -86,7 +87,7 @@ const OrderDetailContent = ({ params }: { params: Promise<{ id: string }> }) => 
     }
   };
 
-  if (loading) return <p className="text-muted">Loading...</p>;
+  if (loading) return <PageLoader />;
   if (!order) return <p className="text-red-600">Order not found</p>;
 
   const canCancel = order.status === "PENDING_PAYMENT";
@@ -118,7 +119,7 @@ const OrderDetailContent = ({ params }: { params: Promise<{ id: string }> }) => 
         <div className="space-y-3 text-sm">
           <div className="flex justify-between"><span className="text-muted">Type</span><span className="capitalize">{order.serviceType.toLowerCase().replace("_", " ")}</span></div>
           {order.serviceType === "ALTERATION" && (<>
-            <div className="flex justify-between"><span className="text-muted">Garment</span><span>{order.garmentType?.name}</span></div>
+            <div className="flex justify-between"><span className="text-muted">Garment</span><span>            {order.category?.name}</span></div>
             {order.fitPreference && <div className="flex justify-between"><span className="text-muted">Fit</span><span className="capitalize">{order.fitPreference.toLowerCase()}</span></div>}
             {order.pickupDate && <div className="flex justify-between"><span className="text-muted">Pickup</span><span>{new Date(order.pickupDate).toLocaleDateString()}</span></div>}
             {order.estimatedCompletion && <div className="flex justify-between"><span className="text-muted">Est. Completion</span><span>{new Date(order.estimatedCompletion).toLocaleDateString()}</span></div>}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageLoader } from "@/components/ui/page-loader";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ArrowRight } from "lucide-react";
@@ -26,7 +27,7 @@ const OrdersContent = () => {
     fetch("/api/orders").then((r) => r.json()).then(setOrders).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

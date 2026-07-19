@@ -7,14 +7,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { SiteLogo } from "@/components/site-logo";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 
 const LoginContent = () => {
   const { data: session } = useSession();
   const router = useRouter();
+  const [searchParams] = useState(() => new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""));
+  const callbackUrl = searchParams.get("callbackUrl") || "";
+
   useEffect(() => {
-    if (session) router.replace("/");
-  }, [session, router]);
+    if (session) router.replace(callbackUrl || "/");
+  }, [session, router, callbackUrl]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +41,7 @@ const LoginContent = () => {
     }
     const res = await fetch("/api/auth/session");
     const session = await res.json();
-    const dest = session?.user?.role === "ADMIN" ? "/admin" : "/";
+    const dest = callbackUrl || (session?.user?.role === "ADMIN" ? "/admin" : "/");
     router.push(dest);
     router.refresh();
   };
@@ -46,9 +50,7 @@ const LoginContent = () => {
     <div className="flex-1 flex items-center justify-center bg-surface">
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-navy tracking-wide">
-            JENDAVE
-          </h1>
+          <SiteLogo href="/" className="text-2xl font-bold text-navy tracking-wide" />
           <p className="text-sm text-muted mt-1">Sign in to your account</p>
         </div>
         <Card className="p-6">

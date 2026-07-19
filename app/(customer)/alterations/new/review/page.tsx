@@ -24,15 +24,15 @@ const FIT_LABELS: Record<string, string> = {
 
 const ReviewForm = () => {
   const router = useRouter();
-  const { slug, photo, fitPreference, measurements, pickupDate, setPickupDate, serviceFee, setServiceFee, estimatedCompletion, setEstimatedCompletion, garmentTypeId } = useAlterationWizard();
+  const { slug, photo, fitPreference, measurements, pickupDate, setPickupDate, serviceFee, setServiceFee, estimatedCompletion, setEstimatedCompletion, categoryId } = useAlterationWizard();
 
-  if (!garmentTypeId) {
+  if (!categoryId) {
     router.replace("/alterations/new");
     return null;
   }
 
   const [localPickup, setLocalPickup] = useState(pickupDate);
-  const [localServiceFee, setLocalServiceFee] = useState(serviceFee || "250");
+  const [localServiceFee, setLocalServiceFee] = useState(serviceFee);
   const [localEstimatedCompletion, setLocalEstimatedCompletion] = useState(estimatedCompletion);
 
   const handleNext = () => {
@@ -64,7 +64,7 @@ const ReviewForm = () => {
         <div>
           <span className="text-muted">Photo:</span>
           {photo && (
-            <div className="relative max-h-32 mt-2"><Image src={photo} alt="Garment" fill className="object-contain rounded-lg" /></div>
+            <div className="relative max-h-32 mt-2"><Image src={photo} alt="Garment" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-lg" /></div>
           )}
         </div>
         {Object.keys(measurements).length > 0 && (

@@ -56,9 +56,9 @@ const GARMENT_SLUG_TO_KEY: Record<string, string> = {
 
 const MeasurementsForm = () => {
   const router = useRouter();
-  const { garmentTypeId, slug, photo, measurements: savedMeasurements, fitPreference: savedFit, setMeasurements, setFitPreference } = useAlterationWizard();
+  const { categoryId, slug, photo, measurements: savedMeasurements, fitPreference: savedFit, setMeasurements, setFitPreference } = useAlterationWizard();
 
-  if (!garmentTypeId) {
+  if (!categoryId) {
     router.replace("/alterations/new");
     return null;
   }
@@ -100,7 +100,7 @@ const MeasurementsForm = () => {
       {sizeGuideUrl && (
         <div className="mt-4">
           <p className="text-xs text-muted font-medium mb-2 uppercase tracking-wider">Size Guide</p>
-          <div className="relative w-full max-h-64 border border-border bg-surface"><Image src={sizeGuideUrl} alt="Size guide" fill className="object-contain rounded-lg" /></div>
+          <div className="relative w-full max-h-64 border border-border bg-surface"><Image src={sizeGuideUrl} alt="Size guide" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-lg" /></div>
         </div>
       )}
 

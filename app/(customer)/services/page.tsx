@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Scissors, Ruler, Camera, CreditCard, Shirt, SlidersHorizontal, ChevronRight, ArrowRight } from "lucide-react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
-type GarmentType = { id: number; name: string };
+type Category = { id: number; name: string; slug: string };
 
 const steps = [
   { icon: Ruler, label: "Take Measurements", desc: "Enter your exact body measurements for a perfect fit." },
@@ -15,12 +15,12 @@ const steps = [
 ];
 
 const ServicesContent = () => {
-  const [garmentTypes, setGarmentTypes] = useState<GarmentType[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/garment-types")
+    fetch("/api/categories")
       .then((r) => r.json())
-      .then(setGarmentTypes)
+      .then(setCategories)
       .catch(() => {});
   }, []);
 
@@ -51,12 +51,7 @@ const ServicesContent = () => {
             <div className="h-px w-8 bg-gold/40" />
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {(garmentTypes.length > 0 ? garmentTypes : [
-              { id: 1, name: "Pants" },
-              { id: 2, name: "Shorts" },
-              { id: 3, name: "Shirt" },
-              { id: 4, name: "Military Uniform" },
-            ]).map((g) => (
+            {(categories.length > 0 ? categories : []).map((g) => (
               <Link key={g.id} href="/alterations/new"
                 className="group bg-white rounded-xl shadow-card p-5 hover:shadow-raised transition-all border border-transparent hover:border-gold/30"
               >

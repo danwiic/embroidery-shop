@@ -9,12 +9,12 @@ import { useAlterationWizard } from "@/lib/contexts/alteration-wizard";
 
 const PaymentForm = () => {
   const router = useRouter();
-  const { garmentTypeId, photo, fitPreference, pickupDate, serviceFee, estimatedCompletion, measurements, paymentMethod, paymentRef, setPaymentMethod, setPaymentRef, reset } = useAlterationWizard();
+  const { categoryId, photo, fitPreference, pickupDate, serviceFee, estimatedCompletion, measurements, paymentMethod, paymentRef, setPaymentMethod, setPaymentRef, reset } = useAlterationWizard();
   const [localMethod, setLocalMethod] = useState(paymentMethod);
   const [localRef, setLocalRef] = useState(paymentRef);
   const [submitting, setSubmitting] = useState(false);
 
-  if (!garmentTypeId) {
+  if (!categoryId) {
     router.replace("/alterations/new");
     return null;
   }
@@ -26,7 +26,7 @@ const PaymentForm = () => {
     setPaymentRef(localRef);
 
     const body = {
-      garmentTypeId,
+      categoryId,
       garmentPhotoUrl: photo,
       fitPreference,
       pickupDate,

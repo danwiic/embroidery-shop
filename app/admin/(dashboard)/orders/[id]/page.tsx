@@ -4,8 +4,9 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PageLoader } from "@/components/ui/page-loader";
 import { ArrowLeft, CheckCircle, XCircle, Package, Truck, Store } from "lucide-react";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -27,7 +28,7 @@ type Order = {
   fitPreference?: string;
   createdAt: string;
   user: { id: string; name: string; email: string; phone?: string };
-  garmentType?: { name: string };
+  category?: { name: string };
   items?: { id: string; quantity: number; price: number; product: { name: string; imageUrl?: string } }[];
   measurements?: Record<string, number | null>;
   statusHistory?: { id: string; status: OrderStatus; note?: string; createdAt: string }[];
@@ -102,7 +103,7 @@ const AdminOrderDetailPage = ({ params }: { params: Promise<{ id: string }> }) =
     setUpdating(false);
   };
 
-  if (loading) return <p className="text-muted py-8 text-center text-sm">Loading...</p>;
+  if (loading) return <PageLoader />;
   if (!order) return <p className="text-red-600 py-8 text-center">Order not found</p>;
 
   const nextStatuses = STATUS_FLOW[order.status] ?? [];
@@ -166,9 +167,9 @@ const AdminOrderDetailPage = ({ params }: { params: Promise<{ id: string }> }) =
         <h2 className="text-sm font-semibold text-navy mb-3">Details</h2>
         {order.serviceType === "ALTERATION" ? (
           <div className="space-y-2 text-sm">
-            <p>Garment: {order.garmentType?.name}</p>
+            <p>Garment: {order.category?.name}</p>
             <p>Fit: {order.fitPreference?.replace("_", " ") ?? "N/A"}</p>
-            {order.garmentPhotoUrl && <div className="relative max-w-xs mt-2"><Image src={order.garmentPhotoUrl} alt="Garment" fill className="object-contain rounded-lg shadow-card" /></div>}
+            {order.garmentPhotoUrl && <div className="relative max-w-xs mt-2"><Image src={order.garmentPhotoUrl} alt="Garment" fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain rounded-lg shadow-card" /></div>}
             {order.measurements && (
               <div className="mt-3">
                 <p className="font-medium mb-1">Measurements:</p>

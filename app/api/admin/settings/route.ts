@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { clearSettingsCache } from "@/lib/services/settings";
 
 export const GET = async () => {
   const session = await auth();
@@ -22,7 +23,7 @@ export const PUT = async (req: Request) => {
 
   try {
     const body = await req.json();
-    const keys = ["shopName", "shopEmail", "shopPhone", "shopAddress", "aboutText"];
+    const keys = ["shopName", "shopEmail", "shopPhone", "shopAddress", "aboutText", "logoUrl", "resizingFee"];
 
     for (const key of keys) {
       if (body[key] !== undefined) {
@@ -33,6 +34,8 @@ export const PUT = async (req: Request) => {
         });
       }
     }
+
+    clearSettingsCache();
 
     const settings = await prisma.shopSetting.findMany();
     const map: Record<string, string> = {};

@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 type WizardState = {
-  garmentTypeId: number;
+  categoryId: number;
   slug: string;
   photo: string;
   measurements: Record<string, string>;
@@ -16,7 +16,7 @@ type WizardState = {
 };
 
 type WizardContext = WizardState & {
-  setGarmentType: (id: number, slug: string) => void;
+  setCategory: (id: number, slug: string) => void;
   setPhoto: (url: string) => void;
   setMeasurements: (m: Record<string, string>) => void;
   setFitPreference: (v: string) => void;
@@ -29,7 +29,7 @@ type WizardContext = WizardState & {
 };
 
 const initial: WizardState = {
-  garmentTypeId: 0,
+  categoryId: 0,
   slug: "",
   photo: "",
   measurements: {},
@@ -46,9 +46,20 @@ const Ctx = createContext<WizardContext | null>(null);
 export const AlterationWizardProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<WizardState>(initial);
 
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.resizingFee) {
+          setState((s) => ({ ...s, serviceFee: data.resizingFee }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const ctx: WizardContext = {
     ...state,
-    setGarmentType: (id, slug) => setState((s) => ({ ...s, garmentTypeId: id, slug })),
+    setCategory: (id, slug) => setState((s) => ({ ...s, categoryId: id, slug })),
     setPhoto: (url) => setState((s) => ({ ...s, photo: url })),
     setMeasurements: (m) => setState((s) => ({ ...s, measurements: m })),
     setFitPreference: (v) => setState((s) => ({ ...s, fitPreference: v })),

@@ -9,6 +9,8 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/page-loader";
+import { useToast } from "@/lib/contexts/toast";
 import { ImagePlus, Package, Pencil, Trash2, X } from "lucide-react";
 
 type Category = { id: number; name: string };
@@ -37,6 +39,7 @@ const emptyForm = () => ({
 });
 
 const ProductsContent = () => {
+  const { addToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +73,13 @@ const ProductsContent = () => {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    await fetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      addToast("error", data.error ?? "Failed to delete product");
+      setDeleting(false);
+      return;
+    }
     setDeleting(false);
     setDeleteTarget(null);
     fetchProducts();
@@ -168,7 +177,7 @@ const ProductsContent = () => {
     setAddOpen(true);
   };
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div>
@@ -200,7 +209,7 @@ const ProductsContent = () => {
                     <div className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-lg bg-surface overflow-hidden shrink-0 ring-1 ring-border/50">
                         {p.imageUrl ? (
-                          <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                          <Image src={p.imageUrl} alt={p.name} fill sizes="40px" className="object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted/50">
                             <Package className="w-4 h-4" />
@@ -261,7 +270,7 @@ const ProductsContent = () => {
             <div className="grid grid-cols-3 gap-2">
               {form.images.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-surface">
-                  <div className="relative w-full h-full"><Image src={url} alt="" fill className="object-cover" /></div>
+                  <div className="relative w-full h-full"><Image src={url} alt="" fill sizes="(max-width: 768px) 33vw, 200px" className="object-cover" /></div>
                   <button type="button" onClick={() => setForm({ ...form, images: form.images.filter((_, j) => j !== i) })}
                     className="absolute top-1 right-1 bg-white/80 rounded-full w-5 h-5 flex items-center justify-center text-muted hover:text-red-600 text-xs">✕</button>
                 </div>

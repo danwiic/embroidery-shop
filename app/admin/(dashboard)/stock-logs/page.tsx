@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageLoader } from "@/components/ui/page-loader";
 import { ClipboardList, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import Link from "next/link";
 
@@ -27,7 +28,7 @@ const StockLogsContent = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div>

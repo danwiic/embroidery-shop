@@ -9,11 +9,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
+import { PageLoader } from "@/components/ui/page-loader";
+import { useToast } from "@/lib/contexts/toast";
 import { Pencil, Plus, Ruler, Trash2 } from "lucide-react";
 
 type Category = { id: number; name: string; slug: string; sizeGuideUrl?: string };
 
 const CategoriesContent = () => {
+  const { addToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
@@ -66,7 +69,13 @@ const CategoriesContent = () => {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    await fetch(`/api/admin/categories/${deleteTarget.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/categories/${deleteTarget.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json();
+      addToast("error", data.error ?? "Failed to delete category");
+      setDeleting(false);
+      return;
+    }
     setDeleting(false);
     setDeleteTarget(null);
     fetchCategories();
@@ -88,7 +97,7 @@ const CategoriesContent = () => {
     reader.readAsDataURL(file);
   };
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div>
@@ -151,7 +160,7 @@ const CategoriesContent = () => {
             <label className="block text-sm font-medium text-foreground">Size Guide Image</label>
             {form.sizeGuideUrl ? (
               <div className="relative">
-                <div className="relative w-full h-40 border border-border bg-surface"><Image src={form.sizeGuideUrl} alt="Size guide" fill className="object-contain rounded-lg" /></div>
+                <div className="relative w-full h-40 border border-border bg-surface"><Image src={form.sizeGuideUrl} alt="Size guide" fill sizes="(max-width: 768px) 100vw, 500px" className="object-contain rounded-lg" /></div>
                 <button type="button" onClick={() => setForm({ ...form, sizeGuideUrl: "" })} className="absolute top-2 right-2 bg-white/80 rounded-full w-6 h-6 flex items-center justify-center text-muted hover:text-foreground text-sm">✕</button>
               </div>
             ) : (

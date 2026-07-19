@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Pagination } from "@/components/ui/pagination";
+import { PageLoader } from "@/components/ui/page-loader";
 
 type Category = { id: number; name: string; slug: string };
 type ProductVariant = { id: number; color?: string; size?: string; stock: number };
@@ -83,6 +84,8 @@ const ProductsContent = () => {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [allColorOptions, setAllColorOptions] = useState<string[]>([]);
+  const [allSizeOptions, setAllSizeOptions] = useState<string[]>([]);
 
   // Filters from URL
   const searchQuery = searchParams.get("q") ?? "";
@@ -142,6 +145,14 @@ const ProductsContent = () => {
 
   useEffect(() => {
     fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
+    fetch("/api/products?limit=200")
+      .then((r) => r.json())
+      .then((data: Product[]) => {
+        setAllColorOptions(Array.from(new Set(data.flatMap(colorsOf))).sort() as string[]);
+        const available = new Set(data.flatMap(sizesOf));
+        setAllSizeOptions(["XS", "S", "M", "L", "XL", "XXL"].filter((s) => available.has(s)));
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
@@ -157,19 +168,6 @@ const ProductsContent = () => {
   };
 
   const hasFilters = selectedCategory || selectedColors.size > 0 || selectedSizes.size > 0 || searchQuery || sort !== "name";
-
-  const colorOptions = useMemo(() => {
-    if (products.length === 0) return [];
-    // Try to get from a static list or the actual products
-    return Array.from(new Set(products.flatMap(colorsOf))).sort();
-  }, [products]);
-
-  const sizeOptions = useMemo(() => {
-    if (products.length === 0) return [];
-    const allSizes = ["XS", "S", "M", "L", "XL", "XXL"];
-    const available = new Set(products.flatMap(sizesOf));
-    return allSizes.filter((s) => available.has(s));
-  }, [products]);
 
   return (
     <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-10 py-6">
@@ -189,9 +187,9 @@ const ProductsContent = () => {
             const cat = categories.find((c) => c.name === v);
             toggleFilter("categoryId", new Set(selectedCategory ? [selectedCategory] : []), String(cat?.id ?? ""));
           }} />
-        <FilterSection title="Color" options={colorOptions} selected={selectedColors}
+        <FilterSection title="Color" options={allColorOptions} selected={selectedColors}
           onToggle={(v) => toggleFilter("colors", selectedColors, v)} />
-        <FilterSection title="Size" options={sizeOptions} selected={selectedSizes}
+        <FilterSection title="Size" options={allSizeOptions} selected={selectedSizes}
           onToggle={(v) => toggleFilter("sizes", selectedSizes, v)} />
       </aside>
 
@@ -215,7 +213,7 @@ const ProductsContent = () => {
         </div>
 
         {loading ? (
-          <p className="text-sm text-muted py-8 text-center">Loading...</p>
+          <PageLoader />
         ) : products.length === 0 ? (
           <EmptyState icon="products" title="No products found"
             message={hasFilters ? "No products match these filters." : "Products will appear here once added."} />
@@ -269,7 +267,7 @@ const ProductsContent = () => {
 
 const ProductsPage = () => (
   <ErrorBoundary>
-    <Suspense fallback={<p className="text-sm text-muted py-8 text-center">Loading...</p>}>
+    <Suspense fallback={<PageLoader />}>
       <ProductsContent />
     </Suspense>
   </ErrorBoundary>

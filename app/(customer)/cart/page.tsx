@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageLoader } from "@/components/ui/page-loader";
 
 type CartItem = {
   id: string;
@@ -22,6 +23,7 @@ type CartItem = {
 const CartContent = () => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchCart = () => {
@@ -47,15 +49,17 @@ const CartContent = () => {
   };
 
   const removeItem = async (itemId: string) => {
+    setRemoving(itemId);
     const prev = items;
     setItems((cur) => cur.filter((i) => i.id !== itemId));
     const res = await fetch(`/api/cart/${itemId}`, { method: "DELETE" });
     if (!res.ok) setItems(prev);
+    setRemoving(null);
   };
 
   const total = items.reduce((sum, item) => sum + Number(item.variant?.price ?? item.product.price) * item.quantity, 0);
 
-  if (loading) return <p className="text-sm text-muted py-8 text-center">Loading...</p>;
+  if (loading) return <PageLoader />;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -84,7 +88,7 @@ const CartContent = () => {
                 <div key={item.id} className="group bg-white rounded-xl shadow-card p-4 flex items-center gap-4 hover:shadow-raised transition-all border border-transparent hover:border-gold/20">
                   <Link href={`/products/${item.product.id}`} className="w-20 h-20 bg-surface rounded-lg flex items-center justify-center text-xs text-muted shrink-0 overflow-hidden ring-1 ring-border/50 group-hover:ring-gold/30 transition-all">
                     {item.product.imageUrl ? (
-                      <div className="relative w-full h-full"><Image src={item.product.imageUrl} alt="" fill className="object-cover rounded-lg" /></div>
+                      <div className="relative w-full h-full"><Image src={item.product.imageUrl} alt="" fill sizes="80px" className="object-cover rounded-lg" /></div>
                     ) : (
                       <ShoppingBag className="w-5 h-5 text-muted/50" />
                     )}
@@ -113,8 +117,8 @@ const CartContent = () => {
                   <p className="text-sm font-semibold text-foreground w-24 text-right tabular-nums">
                     ₱{(unitPrice * item.quantity).toFixed(2)}
                   </p>
-                  <button onClick={() => removeItem(item.id)}
-                    className="p-2 rounded-lg text-muted/50 hover:text-red-600 hover:bg-red-50 transition-colors" title="Remove">
+                  <button onClick={() => removeItem(item.id)} disabled={removing === item.id}
+                    className="p-2 rounded-lg text-muted/50 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Remove">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

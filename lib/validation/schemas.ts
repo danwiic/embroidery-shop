@@ -57,15 +57,6 @@ export const categorySchema = z.object({
   sizeGuideUrl: z.string().url().optional().nullable(),
 });
 
-export const garmentTypeSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
-  slug: z
-    .string()
-    .min(1)
-    .max(100)
-    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with dashes"),
-});
-
 export const reviewSchema = z.object({
   rating: z.number().int().min(1, "Rating must be 1-5").max(5, "Rating must be 1-5"),
   comment: z.string().max(1000).optional(),
@@ -82,6 +73,8 @@ export const shopSettingsSchema = z.object({
   shopAddress: z.string().max(500).optional(),
   businessHours: z.string().max(200).optional(),
   aboutText: z.string().max(2000).optional(),
+  logoUrl: z.string().max(500).optional(),
+  resizingFee: z.string().max(20).optional(),
 });
 
 export const stockLogSchema = z.object({
@@ -123,7 +116,7 @@ export const orderCheckoutSchema = z.object({
 });
 
 export const alterationOrderSchema = z.object({
-  garmentTypeId: z.number().int().positive(),
+  categoryId: z.number().int().positive(),
   garmentPhotoUrl: z.string().url(),
   fitPreference: z.enum(["SLIM", "REGULAR", "RELAXED", "WIDE"]),
   pickupDate: z.string().min(1),

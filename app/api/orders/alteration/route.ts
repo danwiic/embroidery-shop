@@ -14,7 +14,7 @@ export const POST = async (req: Request) => {
 
   try {
     const {
-      garmentTypeId,
+      categoryId,
       garmentPhotoUrl,
       fitPreference,
       pickupDate,
@@ -25,7 +25,7 @@ export const POST = async (req: Request) => {
       measurements,
     } = await req.json();
 
-    if (!garmentTypeId || !fitPreference || !pickupDate || !paymentMethod || !paymentRef) {
+    if (!categoryId || !fitPreference || !pickupDate || !paymentMethod || !paymentRef) {
       return NextResponse.json(
         { error: "Missing required alteration fields" },
         { status: 400 },
@@ -34,7 +34,7 @@ export const POST = async (req: Request) => {
 
     const order = await createAlterationOrder({
       userId: session.user.id,
-      garmentTypeId: Number(garmentTypeId),
+      categoryId: Number(categoryId),
       garmentPhotoUrl,
       fitPreference,
       pickupDate,

@@ -9,7 +9,7 @@ type Category = {
   id: number;
   name: string;
   slug: string;
-  sizeGuideUrl?: string | null;
+  productImageUrl?: string | null;
 };
 
 export function ProductMarquee() {
@@ -18,7 +18,7 @@ export function ProductMarquee() {
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    fetch("/api/categories")
+    fetch("/api/categories?withProducts=true")
       .then((r) => r.json())
       .then(setCategories)
       .catch(() => {});
@@ -64,8 +64,8 @@ export function ProductMarquee() {
               }`}
             >
               <div className="aspect-[4/3] rounded-t-xl bg-surface flex items-center justify-center overflow-hidden">
-                {cat.sizeGuideUrl ? (
-                  <div className="relative w-full h-full"><Image src={cat.sizeGuideUrl} alt={cat.name} fill className="object-cover" /></div>
+                {cat.productImageUrl ? (
+                  <div className="relative w-full h-full"><Image src={cat.productImageUrl} alt={cat.name} fill sizes="368px" className="object-cover" /></div>
                 ) : (
                   <Shirt className={`w-8 h-8 ${isActive ? "text-gold-dark" : "text-muted/50"}`} />
                 )}

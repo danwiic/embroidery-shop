@@ -14,7 +14,7 @@ export const getAllOrders = (status?: OrderStatus, dateFrom?: Date, dateTo?: Dat
     include: {
       user: { select: { id: true, name: true, email: true } },
       items: { include: { product: true } },
-      garmentType: true,
+      category: true,
       statusHistory: { orderBy: { createdAt: "desc" }, take: 1 },
     },
     orderBy: { createdAt: "desc" },
@@ -27,7 +27,7 @@ export const getAdminOrder = (id: string) =>
     include: {
       user: { select: { id: true, name: true, email: true, phone: true } },
       items: { include: { product: true } },
-      garmentType: true,
+      category: true,
       measurements: true,
       statusHistory: { orderBy: { createdAt: "desc" } },
     },

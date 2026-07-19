@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageLoader } from "@/components/ui/page-loader";
 
 const CheckoutPage = () => {
   const router = useRouter();
@@ -58,7 +59,7 @@ const CheckoutPage = () => {
     setSubmitting(false);
   };
 
-  if (loading) return <p className="text-muted">Loading...</p>;
+  if (loading) return <PageLoader />;
   if (items.length === 0) {
     router.push("/cart");
     return null;

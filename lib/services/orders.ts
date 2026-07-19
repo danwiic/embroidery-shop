@@ -11,7 +11,7 @@ type CreateReadyMadeOrderParams = {
 
 type CreateAlterationOrderParams = {
   userId: string;
-  garmentTypeId: number;
+  categoryId: number;
   garmentPhotoUrl: string;
   fitPreference: "SLIM" | "REGULAR" | "RELAXED" | "WIDE";
   pickupDate: string;
@@ -87,7 +87,7 @@ export const createAlterationOrder = async (params: CreateAlterationOrderParams)
     data: {
       userId: params.userId,
       serviceType: "ALTERATION",
-      garmentTypeId: params.garmentTypeId,
+      categoryId: params.categoryId,
       garmentPhotoUrl: params.garmentPhotoUrl,
       fitPreference: params.fitPreference,
       pickupDate: new Date(params.pickupDate),
@@ -105,7 +105,7 @@ export const createAlterationOrder = async (params: CreateAlterationOrderParams)
       },
     },
     include: {
-      garmentType: true,
+      category: true,
       measurements: true,
       statusHistory: true,
     },
@@ -119,7 +119,7 @@ export const getMyOrders = (userId: string) =>
     where: { userId },
     include: {
       items: { include: { product: true, variant: true } },
-      garmentType: true,
+      category: true,
       statusHistory: { orderBy: { createdAt: "desc" } },
     },
     orderBy: { createdAt: "desc" },
@@ -130,7 +130,7 @@ export const getOrder = (id: string, userId?: string) =>
     where: userId ? { id, userId } : { id },
     include: {
       items: { include: { product: true, variant: true } },
-      garmentType: true,
+      category: true,
       measurements: true,
       statusHistory: { orderBy: { createdAt: "desc" } },
     },

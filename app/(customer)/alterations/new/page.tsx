@@ -5,36 +5,29 @@ import { useRouter } from "next/navigation";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAlterationWizard } from "@/lib/contexts/alteration-wizard";
 
-type GarmentType = { id: number; name: string; slug: string };
+type Category = { id: number; name: string; slug: string };
 
 const AlterationNewPage = () => {
   const router = useRouter();
-  const { setGarmentType, garmentTypeId } = useAlterationWizard();
-  const [types, setTypes] = useState<GarmentType[]>([]);
-  const [selected, setSelected] = useState<number>(garmentTypeId);
+  const { setCategory, categoryId } = useAlterationWizard();
+  const [types, setTypes] = useState<Category[]>([]);
+  const [selected, setSelected] = useState<number>(categoryId);
 
   useEffect(() => {
-    fetch("/api/admin/garment-types")
+    fetch("/api/categories")
       .then(async (r) => {
         if (!r.ok) throw new Error("Failed to fetch");
         const data = await r.json();
         if (!Array.isArray(data)) throw new Error("Invalid response");
         setTypes(data);
       })
-      .catch(() => {
-        setTypes([
-          { id: 1, name: "Pants", slug: "pants" },
-          { id: 2, name: "Military Uniform", slug: "military-uniform" },
-          { id: 3, name: "Shirt", slug: "shirt" },
-          { id: 4, name: "Shorts", slug: "shorts" },
-        ]);
-      });
+      .catch(() => {});
   }, []);
 
   const handleNext = () => {
     if (!selected) return;
     const t = types.find((t) => t.id === selected);
-    setGarmentType(selected, t?.slug ?? "");
+    setCategory(selected, t?.slug ?? "");
     router.push("/alterations/new/photo");
   };
 

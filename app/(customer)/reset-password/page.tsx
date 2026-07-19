@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { SiteLogo } from "@/components/site-logo";
 import { Check, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
@@ -59,7 +60,7 @@ const ResetForm = () => {
 
   if (!token) {
     return (
-      <div className="flex-1 flex items-start justify-center bg-surface pt-24">
+      <div className="flex-1 flex items-start justify-center bg-surface">
         <div className="w-full max-w-sm px-4 text-center">
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-5 h-5 text-red-500" />
@@ -81,7 +82,7 @@ const ResetForm = () => {
 
   if (done) {
     return (
-      <div className="flex-1 flex items-start justify-center bg-surface pt-24">
+      <div className="flex-1 flex items-start justify-center bg-surface">
         <div className="w-full max-w-sm px-4 text-center">
           <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-green-600" />
@@ -102,12 +103,10 @@ const ResetForm = () => {
   }
 
   return (
-    <div className="flex-1 flex items-start justify-center bg-surface pt-24">
+    <div className="flex-1 flex items-start justify-center bg-surface">
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-navy tracking-wide">
-            JENDAVE
-          </h1>
+          <SiteLogo href="/" className="text-2xl font-bold text-navy tracking-wide" />
           <p className="text-sm text-muted mt-1">
             Choose a new password for your account
           </p>

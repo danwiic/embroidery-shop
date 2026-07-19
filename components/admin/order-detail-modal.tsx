@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/page-loader";
 import { CheckCircle, XCircle, Package, Truck, Store } from "lucide-react";
 import Image from "next/image";
 import type { OrderStatus } from "@prisma/client";
@@ -25,7 +26,7 @@ type Order = {
   fitPreference?: string;
   createdAt: string;
   user: { id: string; name: string; email: string; phone?: string };
-  garmentType?: { name: string };
+  category?: { name: string };
   items?: { id: string; quantity: number; price: number; product: { name: string; imageUrl?: string } }[];
   measurements?: Record<string, number | null>;
   statusHistory?: { id: string; status: OrderStatus; note?: string; createdAt: string }[];
@@ -131,7 +132,7 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
         footer={<Button type="button" variant="outlined" onClick={onClose}>Close</Button>}
       >
         {loading ? (
-          <p className="text-muted text-sm text-center py-8">Loading...</p>
+          <PageLoader />
         ) : !order ? (
           <p className="text-red-600 text-sm text-center py-8">Order not found</p>
         ) : (
@@ -173,9 +174,9 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
               <h3 className="text-xs font-semibold text-navy mb-3">Details</h3>
               {order.serviceType === "ALTERATION" ? (
                 <div className="space-y-2 text-sm">
-                  <p>Garment: {order.garmentType?.name}</p>
+                  <p>Garment: {order.category?.name}</p>
                   <p>Fit: {order.fitPreference?.replace("_", " ") ?? "N/A"}</p>
-                  {order.garmentPhotoUrl && <div className="relative max-w-[200px]"><Image src={order.garmentPhotoUrl} alt="Garment" fill className="object-contain rounded-lg shadow-card" /></div>}
+                  {order.garmentPhotoUrl && <div className="relative max-w-[200px]"><Image src={order.garmentPhotoUrl} alt="Garment" fill sizes="200px" className="object-contain rounded-lg shadow-card" /></div>}
                   {order.measurements && (
                     <div className="mt-2">
                       <p className="font-medium mb-1">Measurements:</p>

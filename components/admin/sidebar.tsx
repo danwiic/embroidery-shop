@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, ShoppingBag, Package, Tags, ClipboardList, History, Users, Scissors, Settings, LogOut, X } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Tags, ClipboardList, History, Users, Settings, LogOut, X } from "lucide-react";
+import { SiteLogo } from "@/components/site-logo";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -13,7 +14,6 @@ const NAV_ITEMS = [
   { label: "Inventory", href: "/admin/inventory", icon: ClipboardList },
   { label: "Stock Log", href: "/admin/stock-logs", icon: History },
   { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Garment Types", href: "/admin/garment-types", icon: Scissors },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -30,9 +30,7 @@ export const Sidebar = ({ open, onClose }: { open: boolean; onClose: () => void 
       {open && <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={onClose} />}
       <aside className={`fixed lg:sticky top-0 left-0 z-50 w-64 bg-navy min-h-screen flex flex-col shadow-raised transition-transform duration-300 lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center justify-between px-6 py-6 border-b border-navy-light/40">
-          <Link href="/admin" className="text-xl font-bold text-gold tracking-wide">
-            JENDAVE
-          </Link>
+          <SiteLogo href="/admin" className="text-xl font-bold text-gold tracking-wide" />
           <button onClick={onClose} className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors">
             <X className="w-4 h-4" />
           </button>

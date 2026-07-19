@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { ShoppingCart, Package, LogOut, User, Bell } from "lucide-react";
+import { SiteLogo } from "@/components/site-logo";
 
 export const CustomerNav = () => {
   const { data: session } = useSession();
@@ -26,9 +27,7 @@ export const CustomerNav = () => {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-card">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="text-lg font-bold text-navy tracking-wide">
-          JENDAVE
-        </Link>
+        <SiteLogo href="/" />
 
         <nav className="flex items-center gap-1 text-sm">
           {session ? (
