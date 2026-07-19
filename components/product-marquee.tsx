@@ -26,7 +26,10 @@ export function ProductMarquee() {
 
   if (categories.length === 0) return null;
 
-  const loop = [...categories, ...categories];
+  const MIN_VISIBLE = 6;
+  const loop = categories.length < MIN_VISIBLE
+    ? Array.from({ length: Math.ceil(MIN_VISIBLE / categories.length) }, () => categories).flat()
+    : [...categories, ...categories];
 
   return (
     <div

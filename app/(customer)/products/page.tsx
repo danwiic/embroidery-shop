@@ -186,7 +186,14 @@ const ProductsContent = () => {
           selected={new Set(selectedCategory ? [categories.find((c) => String(c.id) === selectedCategory)?.name ?? ""].filter(Boolean) : [])}
           onToggle={(v) => {
             const cat = categories.find((c) => c.name === v);
-            toggleFilter("categoryId", new Set(selectedCategory ? [selectedCategory] : []), String(cat?.id ?? ""));
+            if (!cat) return;
+            const p = new URLSearchParams(searchParams.toString());
+            const cur = p.get("categoryId") ?? "";
+            const val = String(cat.id);
+            if (cur === val) p.delete("categoryId");
+            else p.set("categoryId", val);
+            p.delete("page");
+            router.push(`/products?${p.toString()}`, { scroll: false });
           }} />
         <FilterSection title="Color" options={allColorOptions} selected={selectedColors}
           onToggle={(v) => toggleFilter("colors", selectedColors, v)} />

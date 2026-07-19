@@ -19,9 +19,7 @@ export const getCategoriesWithProducts = async () => {
     },
     orderBy: { name: "asc" },
   });
-  return cats
-    .filter((c) => c._count.products > 0)
-    .map((c) => ({ ...c, productImageUrl: c.products[0]?.imageUrl ?? null }));
+  return cats.map((c) => ({ ...c, productImageUrl: c.products[0]?.imageUrl ?? null }));
 };
 
 export const createCategory = (data: { name: string; slug: string; sizeGuideUrl?: string }) =>
