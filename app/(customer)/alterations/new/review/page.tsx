@@ -64,7 +64,7 @@ const ReviewForm = () => {
         <div>
           <span className="text-muted">Photo:</span>
           {photo && (
-            <div className="relative max-h-32 mt-2"><Image src={photo} alt="Garment" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-lg" /></div>
+            <div className="relative h-32 mt-2"><Image src={photo} alt="Garment" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-lg" /></div>
           )}
         </div>
         {Object.keys(measurements).length > 0 && (

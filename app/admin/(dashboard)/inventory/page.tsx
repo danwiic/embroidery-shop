@@ -116,7 +116,7 @@ const InventoryContent = () => {
         <h1 className="text-xl font-semibold text-foreground">Inventory</h1>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-x-auto">
         {products.length === 0 ? (
           <EmptyState
             icon="products"

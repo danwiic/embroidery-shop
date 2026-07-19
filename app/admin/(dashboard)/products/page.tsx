@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -11,7 +11,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/page-loader";
 import { useToast } from "@/lib/contexts/toast";
-import { ImagePlus, Package, Pencil, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Package, Pencil, Trash2, X } from "lucide-react";
 
 type Category = { id: number; name: string };
 type ProductImage = { id: number; url: string; order: number };
@@ -49,6 +49,8 @@ const ProductsContent = () => {
   const [form, setForm] = useState(emptyForm());
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!editOpen;
 
@@ -186,7 +188,7 @@ const ProductsContent = () => {
         <Button onClick={openAdd}>+ Add Product</Button>
       </div>
 
-      <Card className="overflow-hidden mt-4">
+      <Card className="overflow-x-auto mt-4">
         {products.length === 0 ? (
           <EmptyState icon="products" title="No products yet" message="Add your first product to start selling." action={{ label: "Add Product", onClick: openAdd }} />
         ) : (
@@ -275,14 +277,17 @@ const ProductsContent = () => {
                     className="absolute top-1 right-1 bg-white/80 rounded-full w-5 h-5 flex items-center justify-center text-muted hover:text-red-600 text-xs">✕</button>
                 </div>
               ))}
-              <label className="aspect-square flex items-center justify-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-navy/50 transition-colors">
-                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+               <label className="aspect-square flex items-center justify-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-navy/50 transition-colors">
+                <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  setUploadingImage(true);
                   const url = await uploadImage(file);
                   if (url) setForm({ ...form, images: [...form.images, url] });
+                  setUploadingImage(false);
+                  if (uploadRef.current) uploadRef.current.value = "";
                 }} />
-                <ImagePlus className="w-5 h-5 text-muted" />
+                {uploadingImage ? <Loader2 className="w-5 h-5 text-muted animate-spin" /> : <ImagePlus className="w-5 h-5 text-muted" />}
               </label>
             </div>
             <p className="text-xs text-muted/60">First image is the main product photo</p>

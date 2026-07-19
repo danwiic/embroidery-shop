@@ -70,7 +70,7 @@ const CartContent = () => {
       </div>
 
       {items.length === 0 ? (
-        <Card className="p-12">
+        <Card className="p-6 md:p-12">
           <EmptyState
             icon="cart"
             title="Your cart is empty"

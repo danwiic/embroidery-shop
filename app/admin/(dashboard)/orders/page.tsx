@@ -62,7 +62,7 @@ const OrdersContent = () => {
         ))}
       </div>
 
-      <Card className="overflow-hidden mt-4">
+      <Card className="overflow-x-auto mt-4">
         {orders.length === 0 ? (
           <EmptyState icon="search" title="No orders found"
             message={filter ? `No orders with status "${filter.replace(/_/g, " ")}".` : "No orders have been placed yet."}

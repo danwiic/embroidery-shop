@@ -30,7 +30,7 @@ const OrdersContent = () => {
   if (loading) return <PageLoader />;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-8">
         <div className="h-px flex-1 bg-gold/30" />
         <h1 className="text-xl font-semibold text-navy">My Orders</h1>
@@ -38,7 +38,7 @@ const OrdersContent = () => {
       </div>
 
       {orders.length === 0 ? (
-        <Card className="p-12">
+        <Card className="p-6 md:p-12">
           <EmptyState
             icon="orders"
             title="No orders yet"

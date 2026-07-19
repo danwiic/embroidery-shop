@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Pagination } from "@/components/ui/pagination";
@@ -215,8 +216,8 @@ const ProductsContent = () => {
         {loading ? (
           <PageLoader />
         ) : products.length === 0 ? (
-          <EmptyState icon="products" title="No products found"
-            message={hasFilters ? "No products match these filters." : "Products will appear here once added."} />
+          <Card className="p-6 md:p-12"><EmptyState icon="products" title="No products found"
+            message={hasFilters ? "No products match these filters." : "Products will appear here once added."} /></Card>
         ) : (
           <>
             <p className="text-xs text-muted mb-4">{totalCount} product{totalCount === 1 ? "" : "s"}</p>

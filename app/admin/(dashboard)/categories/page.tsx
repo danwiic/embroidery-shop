@@ -11,7 +11,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { PageLoader } from "@/components/ui/page-loader";
 import { useToast } from "@/lib/contexts/toast";
-import { Pencil, Plus, Ruler, Trash2 } from "lucide-react";
+import { Pencil, Plus, Ruler, Trash2, X } from "lucide-react";
 
 type Category = { id: number; name: string; slug: string; sizeGuideUrl?: string };
 
@@ -26,6 +26,7 @@ const CategoriesContent = () => {
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const fetchCategories = () => {
     fetch("/api/admin/categories")
@@ -108,7 +109,7 @@ const CategoriesContent = () => {
         </Button>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-x-auto">
         {categories.length === 0 ? (
           <EmptyState icon="inbox" title="No categories yet" message="Create your first category to organize products." />
         ) : (
@@ -128,9 +129,9 @@ const CategoriesContent = () => {
                   <td className="px-4 py-3.5 text-muted">{c.slug}</td>
                   <td className="px-4 py-3.5">
                     {c.sizeGuideUrl ? (
-                      <a href={c.sizeGuideUrl} target="_blank" className="inline-flex items-center gap-1 text-navy hover:underline">
+                      <button onClick={() => setPreviewUrl(c.sizeGuideUrl!)} className="inline-flex items-center gap-1 text-navy hover:underline">
                         <Ruler className="w-3.5 h-3.5" /> View
-                      </a>
+                      </button>
                     ) : (
                       <span className="text-muted/50">—</span>
                     )}
@@ -176,6 +177,19 @@ const CategoriesContent = () => {
           </div>
         </form>
       </Modal>
+
+      {previewUrl && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setPreviewUrl(null)}>
+          <div className="relative max-w-3xl w-full max-h-[85vh] bg-white rounded-xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setPreviewUrl(null)} className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full w-8 h-8 flex items-center justify-center z-10 shadow transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="relative w-full h-[60vh]">
+              <Image src={previewUrl} alt="Size guide" fill sizes="(max-width: 768px) 100vw, 800px" className="object-contain" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={!!deleteTarget}

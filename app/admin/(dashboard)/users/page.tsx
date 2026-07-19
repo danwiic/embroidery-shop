@@ -50,7 +50,7 @@ const UsersContent = () => {
         <h1 className="text-xl font-semibold text-foreground">Users</h1>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-x-auto">
         {users.length === 0 ? (
           <EmptyState icon="inbox" title="No users yet" message="Users will appear here once they register." />
         ) : (

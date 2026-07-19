@@ -216,7 +216,7 @@ const DashboardPage = () => {
               })}
             </div>
 
-            <Card>
+            <Card className="overflow-x-auto">
               <div className="px-4 py-3.5 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
               </div>

@@ -62,7 +62,7 @@ const PhotoUpload = () => {
       <div className="mt-6">
         {image ? (
           <div className="space-y-4">
-            <div className="relative w-full max-h-80 border border-border"><Image src={image} alt="Garment" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-xl" /></div>
+            <div className="relative w-full h-80 border border-border"><Image src={image} alt="Garment" fill sizes="(max-width: 768px) 100vw, 600px" className="object-contain rounded-xl" /></div>
             <button onClick={() => setImage("")} className="text-sm text-muted hover:text-navy">
               Remove photo
             </button>

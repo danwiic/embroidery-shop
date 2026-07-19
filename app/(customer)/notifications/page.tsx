@@ -29,7 +29,9 @@ const NotificationsPage = () => {
       .catch(() => {});
   };
 
-  useEffect(() => { fetchNotifs(); }, []);
+  useEffect(() => {
+    fetchNotifs();
+  }, []);
 
   const open = async (n: Notification) => {
     if (!n.read) {
@@ -53,46 +55,69 @@ const NotificationsPage = () => {
   if (!session) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-navy">Notifications</h1>
-        {unreadCount > 0 && (
-          <Button size="sm" variant="outlined" onClick={markAllRead} disabled={marking}>
-            {marking ? "Marking..." : `Mark all as read (${unreadCount})`}
-          </Button>
-        )}
-      </div>
-
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {notifications.length === 0 ? (
-        <Card className="p-8">
-          <EmptyState icon="inbox" title="No notifications" message="You're all caught up!" />
-        </Card>
+        <>
+          <div className="flex items-center gap-3 w-full mb-8">
+            <div className="h-px flex-1 bg-gold/30" />
+            <h1 className="text-xl font-semibold text-navy">Notifications</h1>
+            <div className="h-px flex-1 bg-gold/30" />
+          </div>
+          <Card className="w-full p-6 md:p-12">
+            <EmptyState
+              icon="inbox"
+              title="No notifications"
+              message="You're all caught up!"
+            />
+          </Card>
+        </>
       ) : (
-        <div className="space-y-2">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => open(n)}
-              onKeyDown={(e) => { if (e.key === "Enter") open(n); }}
-              className={`rounded-xl shadow-card p-4 flex items-start gap-3 transition-colors cursor-pointer ${
-                n.read ? "bg-white" : "bg-navy/[0.03] border border-navy/10"
-              }`}
-            >
-              <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${n.read ? "bg-border" : "bg-gold"}`} />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm ${n.read ? "text-muted" : "font-medium text-foreground"}`}>
-                  {n.title}
-                </p>
-                <p className="text-sm text-muted mt-0.5">{n.message}</p>
-                <p className="text-xs text-muted/60 mt-1">
-                  {new Date(n.createdAt).toLocaleString()}
-                </p>
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-semibold text-navy">Notifications</h1>
+            {unreadCount > 0 && (
+              <Button
+                size="sm"
+                variant="outlined"
+                onClick={markAllRead}
+                disabled={marking}
+              >
+                {marking ? "Marking..." : `Mark all as read (${unreadCount})`}
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2">
+            {notifications.map((n) => (
+              <div
+                key={n.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => open(n)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") open(n);
+                }}
+                className={`rounded-xl shadow-card p-4 flex items-start gap-3 transition-colors cursor-pointer ${
+                  n.read ? "bg-white" : "bg-navy/[0.03] border border-navy/10"
+                }`}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full mt-2 shrink-0 ${n.read ? "bg-border" : "bg-gold"}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={`text-sm ${n.read ? "text-muted" : "font-medium text-foreground"}`}
+                  >
+                    {n.title}
+                  </p>
+                  <p className="text-sm text-muted mt-0.5">{n.message}</p>
+                  <p className="text-xs text-muted/60 mt-1">
+                    {new Date(n.createdAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
