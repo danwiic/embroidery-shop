@@ -68,7 +68,7 @@ const ProductsContent = () => {
   const router = useRouter();
 
   const searchQuery = searchParams.get("q") ?? "";
-  const selectedCategory = searchParams.get("categoryId") ?? "";
+  const selectedCategoryIds = new Set(searchParams.get("categoryIds")?.split(",").filter(Boolean) ?? []);
   const selectedColors = new Set(searchParams.get("colors")?.split(",").filter(Boolean) ?? []);
   const selectedSizes = new Set(searchParams.get("sizes")?.split(",").filter(Boolean) ?? []);
   const sort = searchParams.get("sort") ?? "name";
@@ -77,7 +77,8 @@ const ProductsContent = () => {
   const searchUrlParams = useMemo(() => {
     const p = new URLSearchParams();
     if (searchQuery) p.set("q", searchQuery);
-    if (selectedCategory) p.set("categoryId", selectedCategory);
+    const catIds = Array.from(selectedCategoryIds).join(",");
+    if (catIds) p.set("categoryIds", catIds);
     const colors = Array.from(selectedColors).join(",");
     if (colors) p.set("colors", colors);
     const sizes = Array.from(selectedSizes).join(",");
@@ -86,7 +87,7 @@ const ProductsContent = () => {
     p.set("page", String(page));
     p.set("limit", "20");
     return p;
-  }, [searchQuery, selectedCategory, selectedColors, selectedSizes, sort, page]);
+  }, [searchQuery, selectedCategoryIds, selectedColors, selectedSizes, sort, page]);
 
   const { data: categoriesData } = useCategories();
   const { data: searchResult, isLoading: searchLoading } = useProductSearch(searchUrlParams);
@@ -122,7 +123,7 @@ const ProductsContent = () => {
 
   const clearFilters = () => router.push("/products", { scroll: false });
 
-  const hasFilters = selectedCategory || selectedColors.size > 0 || selectedSizes.size > 0 || searchQuery || sort !== "name";
+  const hasFilters = selectedCategoryIds.size > 0 || selectedColors.size > 0 || selectedSizes.size > 0 || searchQuery || sort !== "name";
 
   return (
     <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-10 py-6">
@@ -137,13 +138,12 @@ const ProductsContent = () => {
           )}
         </div>
         <FilterSection title="Category" options={categories.map((c) => c.name)}
-          selected={new Set(selectedCategory ? [categories.find((c) => String(c.id) === selectedCategory)?.name ?? ""].filter(Boolean) : [])}
-            onToggle={(v) => {
-              const cat = categories.find((c) => c.name === v);
-              if (!cat) return;
-              const val = String(cat.id);
-              navTo({ categoryId: selectedCategory === val ? undefined : val, page: "1" });
-            }} />
+          selected={new Set(categories.filter((c) => selectedCategoryIds.has(String(c.id))).map((c) => c.name))}
+          onToggle={(v) => {
+            const cat = categories.find((c) => c.name === v);
+            if (!cat) return;
+            toggleFilter("categoryIds", selectedCategoryIds, String(cat.id));
+          }} />
         <FilterSection title="Color" options={allColorOptions} selected={selectedColors}
           onToggle={(v) => toggleFilter("colors", selectedColors, v)} />
         <FilterSection title="Size" options={allSizeOptions} selected={selectedSizes}

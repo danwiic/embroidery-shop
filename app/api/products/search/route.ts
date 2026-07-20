@@ -7,7 +7,7 @@ export const GET = async (req: Request) => {
 
   const parsed = searchQuerySchema.safeParse({
     q: searchParams.get("q") ?? undefined,
-    categoryId: searchParams.get("categoryId") ?? undefined,
+    categoryIds: searchParams.get("categoryIds") ?? undefined,
     minPrice: searchParams.get("minPrice") ?? undefined,
     maxPrice: searchParams.get("maxPrice") ?? undefined,
     colors: searchParams.get("colors") ?? undefined,
@@ -28,7 +28,9 @@ export const GET = async (req: Request) => {
 
   const result = await searchProducts({
     q: params.q,
-    categoryId: params.categoryId,
+    categoryIds: params.categoryIds
+      ? params.categoryIds.split(",").map((c) => Number(c.trim()))
+      : undefined,
     minPrice: params.minPrice,
     maxPrice: params.maxPrice,
     colors: params.colors

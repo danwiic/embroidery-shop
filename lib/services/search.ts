@@ -4,7 +4,7 @@ import type { Prisma } from "@prisma/client";
 
 export type SearchParams = {
   q?: string;
-  categoryId?: number;
+  categoryIds?: number[];
   minPrice?: number;
   maxPrice?: number;
   colors?: string[];
@@ -26,8 +26,8 @@ export const searchProducts = async (params: SearchParams) => {
   }
 
   // Category filter
-  if (params.categoryId) {
-    AND.push({ categoryId: params.categoryId });
+  if (params.categoryIds && params.categoryIds.length > 0) {
+    AND.push({ categoryId: { in: params.categoryIds } });
   }
 
   // Price range

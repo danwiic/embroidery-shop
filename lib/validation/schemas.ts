@@ -85,7 +85,7 @@ export const stockLogSchema = z.object({
 
 export const searchQuerySchema = z.object({
   q: z.string().max(100).optional(),
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryIds: z.string().optional(), // comma-separated
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   colors: z.string().optional(), // comma-separated
