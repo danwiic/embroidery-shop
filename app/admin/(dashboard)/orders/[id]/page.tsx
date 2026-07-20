@@ -10,7 +10,7 @@ import { PageLoader } from "@/components/ui/page-loader";
 import { ArrowLeft, CheckCircle, XCircle, Package, Truck, Store } from "lucide-react";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 type Order = {
   id: string;

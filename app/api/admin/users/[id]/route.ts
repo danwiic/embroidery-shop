@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/types";
 
 export const PATCH = async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await auth();

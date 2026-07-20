@@ -1,27 +1,14 @@
 "use client";
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useState, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, X, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronUp, X, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Pagination } from "@/components/ui/pagination";
 import { PageLoader } from "@/components/ui/page-loader";
-
-type Category = { id: number; name: string; slug: string };
-type ProductVariant = { id: number; color?: string; size?: string; stock: number };
-type Product = {
-  id: number; name: string; price: string; stock: number;
-  color?: string; size?: string; imageUrl?: string;
-  category: Category; variants?: ProductVariant[];
-};
-
-const colorsOf = (p: Product) =>
-  Array.from(new Set([p.color, ...(p.variants ?? []).map((v) => v.color)].filter(Boolean))) as string[];
-const sizesOf = (p: Product) =>
-  Array.from(new Set([p.size, ...(p.variants ?? []).map((v) => v.size)].filter(Boolean))) as string[];
-const totalStockOf = (p: Product) => p.stock + (p.variants ?? []).reduce((sum, v) => sum + v.stock, 0);
+import { useCategories, useProductSearch, useAllProductOptions, colorsOf, sizesOf, totalStockOf } from "@/lib/hooks/use-api";
 
 const COLOR_MAP: Record<string, string> = {
   white: "#ffffff", black: "#000000", navy: "#1e3a5f", "navy blue": "#1e3a5f",
@@ -80,15 +67,6 @@ const ProductsContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [allColorOptions, setAllColorOptions] = useState<string[]>([]);
-  const [allSizeOptions, setAllSizeOptions] = useState<string[]>([]);
-
-  // Filters from URL
   const searchQuery = searchParams.get("q") ?? "";
   const selectedCategory = searchParams.get("categoryId") ?? "";
   const selectedColors = new Set(searchParams.get("colors")?.split(",").filter(Boolean) ?? []);
@@ -96,77 +74,53 @@ const ProductsContent = () => {
   const sort = searchParams.get("sort") ?? "name";
   const page = parseInt(searchParams.get("page") ?? "1");
 
-  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const searchUrlParams = useMemo(() => {
+    const p = new URLSearchParams();
+    if (searchQuery) p.set("q", searchQuery);
+    if (selectedCategory) p.set("categoryId", selectedCategory);
+    const colors = Array.from(selectedColors).join(",");
+    if (colors) p.set("colors", colors);
+    const sizes = Array.from(selectedSizes).join(",");
+    if (sizes) p.set("sizes", sizes);
+    if (sort !== "name") p.set("sort", sort);
+    p.set("page", String(page));
+    p.set("limit", "20");
+    return p;
+  }, [searchQuery, selectedCategory, selectedColors, selectedSizes, sort, page]);
+
+  const { data: categoriesData } = useCategories();
+  const { data: searchResult, isLoading: searchLoading } = useProductSearch(searchUrlParams);
+  const { data: allProducts } = useAllProductOptions();
+
+  const categories = categoriesData ?? [];
+  const products = searchResult?.data ?? [];
+  const totalCount = searchResult?.pagination?.total ?? 0;
+  const totalPages = searchResult?.pagination?.totalPages ?? 1;
+
+  const { allColorOptions, allSizeOptions } = useMemo(() => {
+    if (!allProducts) return { allColorOptions: [] as string[], allSizeOptions: [] as string[] };
+    const colors = Array.from(new Set(allProducts.flatMap(colorsOf))).sort() as string[];
+    const available = new Set(allProducts.flatMap(sizesOf));
+    const sizes = ["XS", "S", "M", "L", "XL", "XXL"].filter((s) => available.has(s));
+    return { allColorOptions: colors, allSizeOptions: sizes };
+  }, [allProducts]);
+
+  const navTo = (updates: Record<string, string | undefined>) => {
+    const p = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
-      if (value === undefined || value === "" || value === "1" || value === "name") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
+      if (value === undefined || value === "" || value === "1" || value === "name") p.delete(key);
+      else p.set(key, value);
     }
-    router.push(`/products?${params.toString()}`, { scroll: false });
-  }, [searchParams, router]);
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Read directly from searchParams to avoid unstable Set/object dependencies
-      const q = searchParams.get("q") ?? "";
-      const cat = searchParams.get("categoryId") ?? "";
-      const colors = searchParams.get("colors") ?? "";
-      const sizes = searchParams.get("sizes") ?? "";
-      const s = searchParams.get("sort") ?? "name";
-      const p = parseInt(searchParams.get("page") ?? "1");
-
-      const params = new URLSearchParams();
-      if (q) params.set("q", q);
-      if (cat) params.set("categoryId", cat);
-      if (colors) params.set("colors", colors);
-      if (sizes) params.set("sizes", sizes);
-      if (s !== "name") params.set("sort", s);
-      params.set("page", String(p));
-      params.set("limit", "20");
-
-      const res = await fetch(`/api/products/search?${params.toString()}`);
-      const data = await res.json();
-      setProducts(data.data ?? []);
-      setTotalCount(data.pagination?.total ?? 0);
-      setTotalPages(data.pagination?.totalPages ?? 1);
-    } catch {
-      // Fallback to basic fetch
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      setProducts(data);
-      setTotalCount(data.length);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
-    fetch("/api/products?limit=200")
-      .then((r) => r.json())
-      .then((data: Product[]) => {
-        setAllColorOptions(Array.from(new Set(data.flatMap(colorsOf))).sort() as string[]);
-        const available = new Set(data.flatMap(sizesOf));
-        setAllSizeOptions(["XS", "S", "M", "L", "XL", "XXL"].filter((s) => available.has(s)));
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+    router.push(`/products?${p.toString()}`, { scroll: false });
+  };
 
   const toggleFilter = (key: string, set: Set<string>, value: string) => {
     const next = new Set(set);
     next.has(value) ? next.delete(value) : next.add(value);
-    updateParams({ [key]: Array.from(next).join(",") || undefined, page: "1" });
+    navTo({ [key]: Array.from(next).join(",") || undefined, page: "1" });
   };
 
-  const clearFilters = () => {
-    router.push("/products", { scroll: false });
-  };
+  const clearFilters = () => router.push("/products", { scroll: false });
 
   const hasFilters = selectedCategory || selectedColors.size > 0 || selectedSizes.size > 0 || searchQuery || sort !== "name";
 
@@ -184,17 +138,12 @@ const ProductsContent = () => {
         </div>
         <FilterSection title="Category" options={categories.map((c) => c.name)}
           selected={new Set(selectedCategory ? [categories.find((c) => String(c.id) === selectedCategory)?.name ?? ""].filter(Boolean) : [])}
-          onToggle={(v) => {
-            const cat = categories.find((c) => c.name === v);
-            if (!cat) return;
-            const p = new URLSearchParams(searchParams.toString());
-            const cur = p.get("categoryId") ?? "";
-            const val = String(cat.id);
-            if (cur === val) p.delete("categoryId");
-            else p.set("categoryId", val);
-            p.delete("page");
-            router.push(`/products?${p.toString()}`, { scroll: false });
-          }} />
+            onToggle={(v) => {
+              const cat = categories.find((c) => c.name === v);
+              if (!cat) return;
+              const val = String(cat.id);
+              navTo({ categoryId: selectedCategory === val ? undefined : val, page: "1" });
+            }} />
         <FilterSection title="Color" options={allColorOptions} selected={selectedColors}
           onToggle={(v) => toggleFilter("colors", selectedColors, v)} />
         <FilterSection title="Size" options={allSizeOptions} selected={selectedSizes}
@@ -209,18 +158,18 @@ const ProductsContent = () => {
             <div className="relative max-w-xs w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/60" />
               <input type="text" defaultValue={searchQuery}
-                onKeyDown={(e) => { if (e.key === "Enter") updateParams({ q: (e.target as HTMLInputElement).value || undefined, page: "1" }); }}
+                onKeyDown={(e) => { if (e.key === "Enter") navTo({ q: (e.target as HTMLInputElement).value || undefined, page: "1" }); }}
                 placeholder="Search by name..."
                 className="w-full pl-9 pr-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/30 transition-colors" />
             </div>
-            <select value={sort} onChange={(e) => updateParams({ sort: e.target.value })}
+            <select value={sort} onChange={(e) => navTo({ sort: e.target.value })}
               className="px-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/30 transition-colors">
               {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
         </div>
 
-        {loading ? (
+        {searchLoading ? (
           <PageLoader />
         ) : products.length === 0 ? (
           <Card className="p-6 md:p-12"><EmptyState icon="products" title="No products found"
@@ -265,7 +214,7 @@ const ProductsContent = () => {
               })}
             </div>
             <Pagination page={page} totalPages={totalPages} total={totalCount}
-              onPageChange={(p) => updateParams({ page: String(p) })} />
+              onPageChange={(p) => navTo({ page: String(p) })} />
           </>
         )}
       </div>

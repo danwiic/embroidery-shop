@@ -4,7 +4,7 @@ import { updateOrderStatus } from "@/lib/services/admin-orders";
 import { createNotification } from "@/lib/services/notifications";
 import { sendEmail } from "@/lib/email/send";
 import { statusUpdateEmail } from "@/lib/email/templates";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 export const PUT = async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await auth();

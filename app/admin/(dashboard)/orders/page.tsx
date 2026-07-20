@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ClickableRow } from "@/components/admin/clickable-row";
 import { OrderDetailModal } from "@/components/admin/order-detail-modal";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 type Order = {
   id: string;

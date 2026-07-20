@@ -1,4 +1,4 @@
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 const STYLES: Record<string, string> = {
   PENDING_PAYMENT: "bg-yellow-100 text-yellow-800",

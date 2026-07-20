@@ -7,7 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Badge } from "@/components/ui/badge";
 import { ClickableRow } from "@/components/admin/clickable-row";
 import { Package, ShoppingBag, TrendingUp, DollarSign, Calendar, RefreshCw } from "lucide-react";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 interface DashboardStats {
   totalOrders: number;

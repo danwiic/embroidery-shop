@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getAllOrders } from "@/lib/services/admin-orders";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 export const GET = async (req: Request) => {
   const session = await auth();

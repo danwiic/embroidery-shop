@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/page-loader";
 import { CheckCircle, XCircle, Package, Truck, Store } from "lucide-react";
 import Image from "next/image";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 type Order = {
   id: string;

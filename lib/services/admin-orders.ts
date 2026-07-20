@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus } from "@/lib/types";
 
 export const getAllOrders = (status?: OrderStatus, dateFrom?: Date, dateTo?: Date) => {
   const where: any = {};
