@@ -80,23 +80,25 @@ export const GET = async (req: Request) => {
     }),
   ]);
 
-  const orderIds = currentOrders.map((o) => o.id);
+  const currentCompleted = currentOrders.filter((o) => o.status === "COMPLETED");
+  const previousCompleted = previousOrders.filter((o) => o.status === "COMPLETED");
+  const currentNonCancelled = currentOrders.filter((o) => o.status !== "CANCELLED");
+  const previousNonCancelled = previousOrders.filter((o) => o.status !== "CANCELLED");
 
-  const productSales = orderIds.length > 0
+  const completedOrderIds = currentCompleted.map((o) => o.id);
+
+  const productSales = completedOrderIds.length > 0
     ? await prisma.orderItem.groupBy({
         by: ["productId"],
-        where: { orderId: { in: orderIds } },
+        where: { orderId: { in: completedOrderIds } },
         _sum: { quantity: true, price: true },
         orderBy: { _sum: { quantity: "desc" } },
         take: 10,
       })
     : [];
 
-  const currentNonCancelled = currentOrders.filter((o) => o.status !== "CANCELLED");
-  const previousNonCancelled = previousOrders.filter((o) => o.status !== "CANCELLED");
-
-  const totalRevenue = currentNonCancelled.reduce((sum, o) => sum + Number(o.totalAmount), 0);
-  const previousRevenue = previousNonCancelled.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+  const totalRevenue = currentCompleted.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+  const previousRevenue = previousCompleted.reduce((sum, o) => sum + Number(o.totalAmount), 0);
 
   const revenueChange = previousRevenue > 0
     ? Math.round(((totalRevenue - previousRevenue) / previousRevenue) * 100)
