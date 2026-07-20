@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useSettings } from "@/lib/hooks/use-api";
 
 type LogoProps = {
   href: string;
@@ -11,20 +11,8 @@ type LogoProps = {
   imageClassName?: string;
 };
 
-type Settings = {
-  shopName?: string;
-  logoUrl?: string;
-};
-
 export const SiteLogo = ({ href, className = "", textClassName = "", imageClassName = "" }: LogoProps) => {
-  const [settings, setSettings] = useState<Settings | null>(null);
-
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then(setSettings)
-      .catch(() => {});
-  }, []);
+  const { data: settings } = useSettings();
 
   const name = settings?.shopName || "JENDAVE";
   const logoUrl = settings?.logoUrl;

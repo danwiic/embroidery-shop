@@ -39,6 +39,23 @@ export const useAllProductOptions = () =>
     staleTime: 60_000,
   });
 
+type Settings = {
+  shopName?: string;
+  shopEmail?: string;
+  shopPhone?: string;
+  shopAddress?: string;
+  logoUrl?: string;
+  aboutText?: string;
+  resizingFee?: number;
+};
+
+export const useSettings = () =>
+  useQuery<Settings>({
+    queryKey: ["settings"],
+    queryFn: () => api("/api/settings"),
+    staleTime: 30_000,
+  });
+
 export const colorsOf = (p: Product) =>
   Array.from(new Set([p.color, ...(p.variants ?? []).map((v) => v.color)].filter(Boolean))) as string[];
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Scissors, Shirt, ShoppingCart, Package, ArrowRight } from "lucide-react";
-import { SiteLogo } from "@/components/site-logo";
+import { useSettings } from "@/lib/hooks/use-api";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ProductMarquee } from "@/components/product-marquee";
@@ -19,18 +19,14 @@ type Product = {
 
 const LandingContent = () => {
   const { data: session } = useSession();
+  const { data: settings } = useSettings();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [cartCount, setCartCount] = useState(0);
-  const [shopName, setShopName] = useState("JENDAVE");
 
   useEffect(() => {
     fetch("/api/products?take=4")
       .then((r) => r.json())
       .then(setFeatured)
-      .catch(() => {});
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((data) => { if (data.shopName) setShopName(data.shopName); })
       .catch(() => {});
   }, []);
 
@@ -51,7 +47,7 @@ const LandingContent = () => {
           Embroidery & Alterations Shop
         </p>
         <h1 className="text-5xl font-bold text-navy tracking-wider relative inline-block">
-          {shopName}
+          {settings?.shopName || "JENDAVE"}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-gold rounded-full" />
         </h1>
         <p className="text-base text-muted mt-6 max-w-md">
