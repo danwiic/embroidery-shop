@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Badge } from "@/components/ui/badge";
 import { ClickableRow } from "@/components/admin/clickable-row";
-import { Package, ShoppingBag, TrendingUp, DollarSign, Calendar, RefreshCw } from "lucide-react";
+import { Package, ShoppingBag, TrendingUp, DollarSign, AlertTriangle, Calendar, RefreshCw, Star } from "lucide-react";
+import Image from "next/image";
 import type { OrderStatus } from "@/lib/types";
 
 interface DashboardStats {
@@ -25,7 +27,31 @@ interface DashboardStats {
   }>;
   revenueChange: number;
   ordersChange: number;
+  lowStockCount: number;
+  lowStockItems: Array<{ id: number; name: string; stock: number; imageUrl?: string | null }>;
+  ordersByStatus: Record<string, number>;
+  topProducts: Array<{ id: number; name: string; imageUrl?: string | null; totalSold: number; revenue: number }>;
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING_PAYMENT: "Pending Payment",
+  PAYMENT_VERIFIED: "Verified",
+  PROCESSING: "Processing",
+  READY_FOR_PICKUP: "Ready for Pickup",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING_PAYMENT: "text-amber-600 bg-amber-50 border-amber-200",
+  PAYMENT_VERIFIED: "text-blue-600 bg-blue-50 border-blue-200",
+  PROCESSING: "text-indigo-600 bg-indigo-50 border-indigo-200",
+  READY_FOR_PICKUP: "text-teal-600 bg-teal-50 border-teal-200",
+  OUT_FOR_DELIVERY: "text-purple-600 bg-purple-50 border-purple-200",
+  COMPLETED: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  CANCELLED: "text-red-600 bg-red-50 border-red-200",
+};
 
 const DATE_PRESETS = [
   { label: "Today", value: "today" },
@@ -35,6 +61,7 @@ const DATE_PRESETS = [
 ];
 
 const DashboardPage = () => {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
@@ -98,6 +125,14 @@ const DashboardPage = () => {
       icon: TrendingUp,
       color: "text-gold-dark",
       bg: "bg-gold/10",
+    },
+    {
+      label: "Low Stock",
+      value: stats?.lowStockCount ?? 0,
+      icon: AlertTriangle,
+      color: (stats?.lowStockCount ?? 0) > 0 ? "text-red-600" : "text-emerald-600",
+      bg: (stats?.lowStockCount ?? 0) > 0 ? "bg-red-50" : "bg-emerald-50",
+      href: "/admin/inventory",
     },
   ];
 
@@ -171,9 +206,9 @@ const DashboardPage = () => {
         </div>
 
         {loading && !stats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse p-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => (
+              <Card key={i} className="animate-pulse p-5 h-full">
                 <div className="h-16 bg-surface rounded-lg" />
               </Card>
             ))}
@@ -182,40 +217,68 @@ const DashboardPage = () => {
           <Card className="p-5">
             <div className="text-center py-4">
               <p className="text-red-500 mb-2">{error}</p>
-              <button
-                onClick={fetchStats}
-                className="text-sm text-navy hover:underline"
-              >
+              <button onClick={fetchStats} className="text-sm text-navy hover:underline">
                 Try again
               </button>
             </div>
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {statCards.map((card) => {
                 const Icon = card.icon;
                 return (
-                  <Card key={card.label} className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-xs text-muted font-medium uppercase tracking-wider">{card.label}</p>
-                        <p className="text-2xl font-bold mt-1 text-foreground">{card.value}</p>
-                        {card.change !== undefined && (
-                          <p className={`text-xs mt-1 ${card.change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                            {card.change >= 0 ? "+" : ""}{card.change}% vs previous period
+                  <button
+                    key={card.label}
+                    onClick={() => card.href && router.push(card.href)}
+                    className={`text-left ${card.href ? "cursor-pointer" : "cursor-default"}`}
+                  >
+                    <Card className="p-5 h-full hover:shadow-raised transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-muted font-medium uppercase tracking-wider">{card.label}</p>
+                          <p className={`text-2xl font-bold mt-1 ${card.label === "Low Stock" && (stats?.lowStockCount ?? 0) > 0 ? "text-red-600" : "text-foreground"}`}>
+                            {card.value}
                           </p>
-                        )}
+                          {card.change !== undefined && (
+                            <p className={`text-xs mt-1 ${card.change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                              {card.change >= 0 ? "+" : ""}{card.change}% vs previous
+                            </p>
+                          )}
+                          {card.label === "Low Stock" && (stats?.lowStockCount ?? 0) > 0 && (
+                            <p className="text-[11px] text-red-500 mt-1">View in Inventory →</p>
+                          )}
+                        </div>
+                        <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center shrink-0`}>
+                          <Icon className={`w-5 h-5 ${card.color}`} />
+                        </div>
                       </div>
-                      <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center`}>
-                        <Icon className={`w-5 h-5 ${card.color}`} />
-                      </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </button>
                 );
               })}
             </div>
 
+            {/* Orders by Status */}
+            {stats && Object.keys(stats.ordersByStatus).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(stats.ordersByStatus).map(([status, count]) => (
+                  <button
+                    key={status}
+                    onClick={() => router.push(`/admin/orders?status=${status}`)}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors hover:shadow-sm ${
+                      STATUS_COLORS[status] ?? "text-muted bg-white border-border"
+                    }`}
+                  >
+                    {STATUS_LABELS[status] ?? status.replace(/_/g, " ")}
+                    <span className="font-bold">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Recent Orders */}
             <Card className="overflow-x-auto">
               <div className="px-4 py-3.5 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
@@ -232,7 +295,7 @@ const DashboardPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recentOrders.slice(0, 10).map((order) => (
+                    {stats.recentOrders.map((order) => (
                       <ClickableRow key={order.id} href={`/admin/orders/${order.id}`}>
                         <td className="px-4 py-3.5">
                           <span className="text-navy font-medium">#{order.orderNumber.slice(0, 8)}</span>
@@ -251,6 +314,49 @@ const DashboardPage = () => {
                 <EmptyState icon="inbox" title="No orders yet" message="Orders will appear here once customers start placing them." />
               )}
             </Card>
+
+            {/* Top Selling Products */}
+            {stats && stats.topProducts.length > 0 && (
+              <Card className="overflow-x-auto">
+                <div className="px-4 py-3.5 border-b border-border">
+                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Star className="w-4 h-4 text-gold-dark" /> Top Selling Products
+                  </h2>
+                </div>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-navy/[0.04]">
+                      <th className="text-left px-4 py-3.5 text-xs font-medium text-muted uppercase tracking-wider">Product</th>
+                      <th className="text-right px-4 py-3.5 text-xs font-medium text-muted uppercase tracking-wider">Sold</th>
+                      <th className="text-right px-4 py-3.5 text-xs font-medium text-muted uppercase tracking-wider">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.topProducts.map((p, i) => (
+                      <tr key={p.id} className="border-b border-border/50 text-sm hover:bg-surface/50 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted w-5 shrink-0">#{i + 1}</span>
+                            {p.imageUrl ? (
+                              <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-surface shrink-0 ring-1 ring-border/50">
+                                <Image src={p.imageUrl} alt={p.name} fill sizes="32px" className="object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center shrink-0 ring-1 ring-border/50">
+                                <Package className="w-3.5 h-3.5 text-muted/50" />
+                              </div>
+                            )}
+                            <span className="font-medium text-sm truncate max-w-[200px]">{p.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-semibold">{p.totalSold}</td>
+                        <td className="px-4 py-3.5 text-right text-muted">₱{Number(p.revenue).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            )}
           </>
         )}
       </div>

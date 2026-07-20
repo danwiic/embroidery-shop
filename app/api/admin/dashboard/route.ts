@@ -50,7 +50,9 @@ export const GET = async (req: Request) => {
     ? { createdAt: { gte: previousPeriodStart, lt: periodStart } }
     : {};
 
-  const [currentOrders, previousOrders, totalProducts, recentOrders] = await Promise.all([
+  const LOW_STOCK_THRESHOLD = 5;
+
+  const [currentOrders, previousOrders, totalProducts, recentOrders, lowStockItems] = await Promise.all([
     prisma.order.findMany({
       where: dateFilter,
       select: { id: true, status: true, totalAmount: true },
@@ -70,7 +72,25 @@ export const GET = async (req: Request) => {
         user: { select: { name: true } },
       },
     }),
+    prisma.product.findMany({
+      where: { deletedAt: null, stock: { lte: LOW_STOCK_THRESHOLD } },
+      select: { id: true, name: true, stock: true, imageUrl: true },
+      orderBy: { stock: "asc" },
+      take: 5,
+    }),
   ]);
+
+  const orderIds = currentOrders.map((o) => o.id);
+
+  const productSales = orderIds.length > 0
+    ? await prisma.orderItem.groupBy({
+        by: ["productId"],
+        where: { orderId: { in: orderIds } },
+        _sum: { quantity: true, price: true },
+        orderBy: { _sum: { quantity: "desc" } },
+        take: 10,
+      })
+    : [];
 
   const currentNonCancelled = currentOrders.filter((o) => o.status !== "CANCELLED");
   const previousNonCancelled = previousOrders.filter((o) => o.status !== "CANCELLED");
@@ -85,6 +105,31 @@ export const GET = async (req: Request) => {
   const ordersChange = previousNonCancelled.length > 0
     ? Math.round(((currentNonCancelled.length - previousNonCancelled.length) / previousNonCancelled.length) * 100)
     : currentNonCancelled.length > 0 ? 100 : 0;
+
+  // Orders by status
+  const ordersByStatus = currentOrders.reduce<Record<string, number>>((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Top products
+  const productIds = productSales.map((ps) => ps.productId);
+  const products = productIds.length > 0
+    ? await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, name: true, imageUrl: true },
+      })
+    : [];
+  const topProducts = productSales.map((ps) => {
+    const product = products.find((p) => p.id === ps.productId);
+    return {
+      id: ps.productId,
+      name: product?.name ?? "Unknown",
+      imageUrl: product?.imageUrl,
+      totalSold: ps._sum.quantity ?? 0,
+      revenue: Number(ps._sum.price ?? 0),
+    };
+  });
 
   return NextResponse.json({
     totalOrders: currentOrders.length,
@@ -102,5 +147,9 @@ export const GET = async (req: Request) => {
       createdAt: o.createdAt.toISOString(),
       user: { name: o.user.name },
     })),
+    lowStockCount: lowStockItems.length,
+    lowStockItems,
+    ordersByStatus,
+    topProducts,
   });
 };
