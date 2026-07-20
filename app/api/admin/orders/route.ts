@@ -11,6 +11,10 @@ export const GET = async (req: Request) => {
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") as OrderStatus | null;
-  const orders = await getAllOrders(status ?? undefined);
-  return NextResponse.json(orders);
+  const q = searchParams.get("q") ?? undefined;
+  const page = searchParams.get("page") ? Number(searchParams.get("page")) : undefined;
+  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
+
+  const result = await getAllOrders({ status: status ?? undefined, q, page, limit });
+  return NextResponse.json(result);
 };

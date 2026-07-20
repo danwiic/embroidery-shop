@@ -14,8 +14,15 @@ export const GET = async (req: Request) => {
 
   const { searchParams } = new URL(req.url);
   const pagination = getPaginationParams(searchParams, { page: 1, limit: 50 });
+  const q = searchParams.get("q")?.trim();
 
-  const where = { deletedAt: null };
+  const where: any = { deletedAt: null };
+  if (q) {
+    where.OR = [
+      { name: { contains: q, mode: "insensitive" } },
+      { category: { name: { contains: q, mode: "insensitive" } } },
+    ];
+  }
   const [data, total] = await Promise.all([
     prisma.product.findMany({
       where,

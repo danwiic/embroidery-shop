@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/lib/contexts/toast";
+import { useProduct, useProductReviews, useCheckCanReview, useAddToCart } from "@/lib/hooks/use-api";
 import Image from "next/image";
 
 const COLOR_MAP: Record<string, string> = {
@@ -24,15 +25,6 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 const toHex = (c: string) => COLOR_MAP[c.toLowerCase().trim()] ?? c.toLowerCase();
-
-type ProductImage = { id: number; url: string; order: number };
-type ProductVariant = { id: number; size?: string; color?: string; price?: string | null; stock: number; imageUrl?: string };
-type Review = { id: number; rating: number; comment?: string; createdAt: string; user: { id: string; name: string } };
-type Product = {
-  id: number; name: string; description?: string; price: string; stock: number;
-  color?: string; size?: string; imageUrl?: string; images: ProductImage[];
-  variants: ProductVariant[]; category: { name: string; slug: string };
-};
 
 const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -54,18 +46,18 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
   const router = useRouter();
   const { addToast } = useToast();
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: product, isLoading } = useProduct(id);
+  const { data: reviews = [] } = useProductReviews(id);
+  const canReviewCheck = useCheckCanReview();
+  const addToCartMutation = useAddToCart();
+
   const [quantity, setQuantity] = useState(1);
-  const [adding, setAdding] = useState(false);
   const [selectedImg, setSelectedImg] = useState(0);
   const [openSection, setOpenSection] = useState<string | null>("description");
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
   const [selectedSize, setSelectedSize] = useState<string | undefined>();
 
-  // Reviews
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  // Reviews state
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -78,43 +70,30 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
   const [notifying, setNotifying] = useState(false);
 
   useEffect(() => {
-    const productId = Number(id);
-    fetch(`/api/products/${id}`)
-      .then((r) => r.json())
-      .then((p: Product) => {
-        setProduct(p);
-        const variants = p.variants ?? [];
-        const inStock = variants.find((v) => v.stock > 0) ?? variants[0];
-        setSelectedColor(inStock?.color);
-        setSelectedSize(inStock?.size);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    if (!product) return;
+    const variants = product.variants ?? [];
+    const inStock = variants.find((v) => v.stock > 0) ?? variants[0];
+    setSelectedColor(inStock?.color);
+    setSelectedSize(inStock?.size);
+  }, [product]);
 
-    // Fetch reviews + check if user can review
-    fetch(`/api/products/${id}/reviews`)
-      .then((r) => r.json())
-      .then((data: Review[]) => {
-        setReviews(data);
-        if (session?.user?.id && data.some((r) => r.user.id === session.user.id)) {
-          setUserReviewed(true);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setReviewsLoading(false));
-
+  useEffect(() => {
     if (session?.user?.id) {
-      fetch(`/api/products/${id}/reviews/check`)
-        .then((r) => r.json())
-        .then((data: { canReview: boolean }) => setCanReview(data.canReview))
-        .catch(() => {});
+      canReviewCheck.check(id).then((data) => setCanReview(data.canReview)).catch(() => {});
     }
   }, [id, session]);
 
-  if (loading) return <PageLoader />;
+  // Check if current user already reviewed
+  useEffect(() => {
+    if (session?.user?.id && reviews.length > 0) {
+      setUserReviewed(reviews.some((r) => r.user.id === session.user.id));
+    }
+  }, [reviews, session]);
+
+  if (isLoading) return <PageLoader />;
   if (!product) return <p className="text-red-600">Product not found</p>;
 
-  const baseVariant: ProductVariant | null = product.color || product.size
+  const baseVariant = product.color || product.size
     ? { id: -1, color: product.color, size: product.size, price: product.price, stock: product.stock, imageUrl: product.imageUrl }
     : null;
 
@@ -152,22 +131,16 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
 
   const addToCart = async () => {
     if (!session) { router.push("/login"); return; }
-    setAdding(true);
-    const res = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      await addToCartMutation.mutateAsync({
         productId: Number(id),
         variantId: selectedVariant && selectedVariant.id !== -1 ? selectedVariant.id : undefined,
         quantity,
-      }),
-    });
-    if (res.ok) router.push("/cart");
-    else {
-      const data = await res.json();
-      addToast("error", data.error ?? "Failed to add to cart");
+      });
+      router.push("/cart");
+    } catch (e: any) {
+      addToast("error", e.message ?? "Failed to add to cart");
     }
-    setAdding(false);
   };
 
   const submitReview = async (e: React.FormEvent) => {
@@ -182,7 +155,6 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
     });
     if (res.ok) {
       const newReview = await res.json();
-      setReviews((prev) => [newReview, ...prev]);
       setUserReviewed(true);
       setReviewRating(0);
       setReviewComment("");
@@ -322,17 +294,17 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
 
           <div className="flex items-center gap-4 mt-6">
             <div className="flex items-center border border-border rounded-lg bg-input">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3 py-2 text-muted hover:text-navy">−</button>
+              <button onClick={() => setQuantity(q => Math.max(1, Math.min(activeStock || 999, q - 1)))} className="px-3 py-2 text-muted hover:text-navy">−</button>
               <span className="px-3 py-2 text-sm font-medium border-x border-border">{quantity}</span>
-              <button onClick={() => setQuantity(Math.min(activeStock, quantity + 1))} className="px-3 py-2 text-muted hover:text-navy">+</button>
+              <button onClick={() => setQuantity(q => Math.max(1, Math.min(activeStock || 999, q + 1)))} className="px-3 py-2 text-muted hover:text-navy">+</button>
             </div>
             <button onClick={activeStock === 0 ? () => setNotifyOpen(true) : addToCart}
-              disabled={adding || (activeStock === 0 ? false : hasVariants && !selectedVariant)}
+              disabled={addToCartMutation.isPending || (activeStock === 0 ? false : hasVariants && !selectedVariant)}
               className="flex-1 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all bg-navy text-white hover:bg-navy-light shadow-raised disabled:bg-surface disabled:text-muted disabled:border disabled:border-border disabled:shadow-none"
             >
               {activeStock === 0 ? (
                 <span className="inline-flex items-center gap-1.5"><Bell className="w-4 h-4" /> Get Notified</span>
-              ) : adding ? (
+              ) : addToCartMutation.isPending ? (
                 <span className="inline-flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> Adding...</span>
               ) : "Add to Cart"}
             </button>
@@ -395,9 +367,7 @@ const ProductDetailContent = ({ params }: { params: Promise<{ id: string }> }) =
           </p>
         )}
 
-        {reviewsLoading ? (
-          <p className="text-sm text-muted">Loading reviews...</p>
-        ) : reviews.length === 0 ? (
+        {reviews.length === 0 ? (
           <p className="text-sm text-muted">No reviews yet. Be the first to review!</p>
         ) : (
           <div className="space-y-3">

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft } from "lucide-react";
@@ -10,56 +9,19 @@ import { EmptyState } from "@/components/ui/empty-state";
 import Image from "next/image";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { PageLoader } from "@/components/ui/page-loader";
-
-type CartItem = {
-  id: string;
-  quantity: number;
-  color?: string;
-  size?: string;
-  variant?: { id: number; size?: string; color?: string; price?: string | null; stock: number };
-  product: { id: number; name: string; price: string; imageUrl?: string; stock: number };
-};
+import { useCart, useUpdateCartItem, useRemoveCartItem } from "@/lib/hooks/use-api";
 
 const CartContent = () => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [removing, setRemoving] = useState<string | null>(null);
+  const { data: cart, isLoading } = useCart();
+  const updateQty = useUpdateCartItem();
+  const removeItem = useRemoveCartItem();
   const router = useRouter();
 
-  const fetchCart = () => {
-    fetch("/api/cart")
-      .then((r) => r.json())
-      .then((data) => { setItems(data.items ?? []); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchCart(); }, []);
-
-  const updateQty = async (itemId: string, quantity: number) => {
-    if (quantity < 1) return;
-    const prev = items;
-    setItems((cur) => cur.map((i) => (i.id === itemId ? { ...i, quantity } : i)));
-    const res = await fetch(`/api/cart/${itemId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity }),
-    });
-    if (!res.ok) setItems(prev);
-  };
-
-  const removeItem = async (itemId: string) => {
-    setRemoving(itemId);
-    const prev = items;
-    setItems((cur) => cur.filter((i) => i.id !== itemId));
-    const res = await fetch(`/api/cart/${itemId}`, { method: "DELETE" });
-    if (!res.ok) setItems(prev);
-    setRemoving(null);
-  };
+  const items = cart?.items ?? [];
 
   const total = items.reduce((sum, item) => sum + Number(item.variant?.price ?? item.product.price) * item.quantity, 0);
 
-  if (loading) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -104,12 +66,12 @@ const CartContent = () => {
                     <p className="text-sm font-semibold text-gold-dark mt-1">₱{unitPrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center border border-border rounded-lg overflow-hidden">
-                    <button onClick={() => updateQty(item.id, item.quantity - 1)} disabled={item.quantity <= 1}
+                    <button onClick={() => updateQty.mutate({ itemId: item.id, quantity: item.quantity - 1 })} disabled={item.quantity <= 1}
                       className="px-2.5 py-1.5 text-muted hover:text-navy hover:bg-gray-50 text-sm disabled:text-muted/30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors">
                       <Minus className="w-3.5 h-3.5" />
                     </button>
                     <span className="w-10 text-center py-1.5 text-sm font-medium border-x border-border tabular-nums">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.id, item.quantity + 1)} disabled={item.quantity >= maxStock}
+                    <button onClick={() => updateQty.mutate({ itemId: item.id, quantity: item.quantity + 1 })} disabled={item.quantity >= maxStock}
                       className="px-2.5 py-1.5 text-muted hover:text-navy hover:bg-gray-50 text-sm disabled:text-muted/30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors">
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -117,7 +79,7 @@ const CartContent = () => {
                   <p className="text-sm font-semibold text-foreground w-24 text-right tabular-nums">
                     ₱{(unitPrice * item.quantity).toFixed(2)}
                   </p>
-                  <button onClick={() => removeItem(item.id)} disabled={removing === item.id}
+                  <button onClick={() => removeItem.mutate(item.id)} disabled={removeItem.isPending}
                     className="p-2 rounded-lg text-muted/50 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Remove">
                     <Trash2 className="w-4 h-4" />
                   </button>

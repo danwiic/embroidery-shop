@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -10,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/page-loader";
+import { Pagination } from "@/components/ui/pagination";
 import { useToast } from "@/lib/contexts/toast";
-import { ImagePlus, Loader2, Package, Pencil, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Package, Pencil, Search, Trash2, X } from "lucide-react";
 
 type Category = { id: number; name: string };
 type ProductImage = { id: number; url: string; order: number };
@@ -40,9 +42,16 @@ const emptyForm = () => ({
 
 const ProductsContent = () => {
   const { addToast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") ?? "";
+  const page = parseInt(searchParams.get("page") ?? "1");
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
@@ -54,18 +63,35 @@ const ProductsContent = () => {
 
   const isEdit = !!editOpen;
 
-  const fetchProducts = () => {
-    fetch("/api/admin/products")
+  const fetchProducts = useCallback(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    params.set("page", String(page));
+    params.set("limit", "20");
+    fetch(`/api/admin/products?${params.toString()}`)
       .then((r) => r.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : data.data ?? []))
+      .then((data) => {
+        setProducts(data.data ?? []);
+        setTotalPages(data.pagination?.totalPages ?? 1);
+        setTotal(data.pagination?.total ?? 0);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [searchQuery, page]);
 
   useEffect(() => {
     fetchProducts();
     fetch("/api/categories").then((r) => r.json()).then(setCategories).catch(() => {});
-  }, []);
+  }, [fetchProducts]);
+
+  const navTo = (updates: Record<string, string | undefined>) => {
+    const p = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined || value === "" || value === "1") p.delete(key);
+      else p.set(key, value);
+    }
+    router.push(`/admin/products?${p.toString()}`);
+  };
 
   const deleteProduct = async (id: number) => {
     const p = products.find((p) => p.id === id);
@@ -134,7 +160,6 @@ const ProductsContent = () => {
         });
 
     if (res.ok) {
-      // Upload additional images
       if (!isEdit) {
         const created = await res.json();
         for (const url of form.images) {
@@ -183,14 +208,26 @@ const ProductsContent = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">Products</h1>
-        <Button onClick={openAdd}>+ Add Product</Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/60" />
+            <input type="text" defaultValue={searchQuery}
+              onKeyDown={(e) => { if (e.key === "Enter") navTo({ q: (e.target as HTMLInputElement).value || undefined, page: "1" }); }}
+              placeholder="Search products..."
+              className="w-full pl-9 pr-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/30 transition-colors" />
+          </div>
+          <Button onClick={openAdd} className="shrink-0">+ Add Product</Button>
+        </div>
       </div>
 
       <Card className="overflow-x-auto mt-4">
         {products.length === 0 ? (
-          <EmptyState icon="products" title="No products yet" message="Add your first product to start selling." action={{ label: "Add Product", onClick: openAdd }} />
+          <EmptyState icon="products" title="No products found"
+            message={searchQuery ? `No products matching "${searchQuery}".` : "Add your first product to start selling."}
+            action={searchQuery ? { label: "Clear search", onClick: () => navTo({ q: undefined, page: "1" }) } : { label: "Add Product", onClick: openAdd }}
+          />
         ) : (
           <table className="w-full">
             <thead>
@@ -238,6 +275,9 @@ const ProductsContent = () => {
           </table>
         )}
       </Card>
+
+      <Pagination page={page} totalPages={totalPages} total={total}
+        onPageChange={(p) => navTo({ page: String(p) })} />
 
       <Modal open={addOpen || isEdit} onClose={() => { setAddOpen(false); setEditOpen(null); setForm(emptyForm()); }}
         title={isEdit ? "Edit Product" : "Add Product"}

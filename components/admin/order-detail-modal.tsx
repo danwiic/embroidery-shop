@@ -1,36 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/page-loader";
-import { CheckCircle, XCircle, Package, Truck, Store } from "lucide-react";
+import { CheckCircle, XCircle, Package, Truck, Store, X } from "lucide-react";
 import Image from "next/image";
+import { useAdminOrder, useUpdateOrderStatus } from "@/lib/hooks/use-api";
 import type { OrderStatus } from "@/lib/types";
-
-type Order = {
-  id: string;
-  orderNumber: string;
-  serviceType: string;
-  status: OrderStatus;
-  totalAmount: number;
-  paymentMethod: string;
-  paymentRef: string;
-  deliveryAddress?: string;
-  fulfillment?: string;
-  estimatedCompletion?: string;
-  pickupDate?: string;
-  garmentPhotoUrl?: string;
-  fitPreference?: string;
-  createdAt: string;
-  user: { id: string; name: string; email: string; phone?: string };
-  category?: { name: string };
-  items?: { id: string; quantity: number; price: number; product: { name: string; imageUrl?: string } }[];
-  measurements?: Record<string, number | null>;
-  statusHistory?: { id: string; status: OrderStatus; note?: string; createdAt: string }[];
-};
 
 const STATUS_FLOW: Record<string, string[]> = {
   PENDING_PAYMENT: ["PAYMENT_VERIFIED", "CANCELLED"],
@@ -45,42 +24,23 @@ const STATUS_FLOW: Record<string, string[]> = {
 type Props = { orderId: string | null; onClose: () => void };
 
 export const OrderDetailModal = ({ orderId, onClose }: Props) => {
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const { data: order, isLoading, refetch } = useAdminOrder(orderId);
+  const updateStatus = useUpdateOrderStatus();
   const [actionModal, setActionModal] = useState<string | null>(null);
   const [actionStatus, setActionStatus] = useState("");
   const [note, setNote] = useState("");
   const [assignee, setAssignee] = useState("");
-
-  useEffect(() => {
-    if (!orderId) { setOrder(null); return; }
-    setLoading(true);
-    fetch(`/api/admin/orders/${orderId}`)
-      .then((r) => r.json())
-      .then((data) => { setOrder(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [orderId]);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
 
   const doAction = async () => {
-    if (!actionStatus || updating) return;
-    setUpdating(true);
-    const body: any = { status: actionStatus };
-    if (note.trim()) body.note = note.trim();
-    const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
+    if (!actionStatus || !orderId || updateStatus.isPending) return;
+    try {
+      await updateStatus.mutateAsync({ orderId, status: actionStatus, note: note.trim() || undefined });
       setActionModal(null);
-      const data = await res.json();
-      setOrder(data);
-    } else {
-      const data = await res.json();
-      alert(data.error ?? "Failed to update order");
+      refetch();
+    } catch {
+      // error handled by mutation
     }
-    setUpdating(false);
   };
 
   const actionMeta = (status: string) => {
@@ -97,14 +57,13 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
 
   const ActionIcon = actionMeta(actionStatus).icon;
 
-  // Small modal for action
   const actionForm = actionModal && order && (
     <Modal open={!!actionModal} onClose={() => setActionModal(null)}
       title={actionMeta(actionStatus).title}
       footer={<>
         <Button type="button" variant="outlined" onClick={() => setActionModal(null)}>Cancel</Button>
-        <Button type="submit" form="action-form" disabled={updating}>
-          {updating ? "Updating..." : actionMeta(actionStatus).title}
+        <Button type="submit" form="action-form" disabled={updateStatus.isPending}>
+          {updateStatus.isPending ? "Updating..." : actionMeta(actionStatus).title}
         </Button>
       </>}
     >
@@ -131,7 +90,7 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
       <Modal open={!!orderId} onClose={onClose} title=""
         footer={<Button type="button" variant="outlined" onClick={onClose}>Close</Button>}
       >
-        {loading ? (
+        {isLoading ? (
           <PageLoader />
         ) : !order ? (
           <p className="text-red-600 text-sm text-center py-8">Order not found</p>
@@ -145,14 +104,14 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
                   <span className="capitalize">{order.serviceType.toLowerCase().replace("_", " ")}</span>
                 </p>
               </div>
-              <Badge status={order.status} />
+              <Badge status={order.status as OrderStatus} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="bg-white rounded-xl shadow-card p-4">
                 <h3 className="text-xs font-semibold text-navy mb-2">Customer</h3>
                 <p className="text-sm text-foreground">{order.user.name}</p>
-                <p className="text-sm text-muted">{order.user.email}</p>
+                <p className="text-sm text-muted break-all">{order.user.email}</p>
                 {order.user.phone && <p className="text-sm text-muted">{order.user.phone}</p>}
               </div>
               <div className="bg-white rounded-xl shadow-card p-4">
@@ -176,7 +135,14 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
                 <div className="space-y-2 text-sm">
                   <p>Garment: {order.category?.name}</p>
                   <p>Fit: {order.fitPreference?.replace("_", " ") ?? "N/A"}</p>
-                  {order.garmentPhotoUrl && <div className="relative max-w-[200px]"><Image src={order.garmentPhotoUrl} alt="Garment" fill sizes="200px" className="object-contain rounded-lg shadow-card" /></div>}
+                  {order.garmentPhotoUrl && (
+                    <div>
+                      <p className="font-medium mb-1">Garment Photo:</p>
+                      <button onClick={() => setPreviewImg(order.garmentPhotoUrl!)} className="relative w-[200px] h-40 rounded-lg overflow-hidden border border-border hover:border-navy/40 transition-colors cursor-pointer">
+                        <Image src={order.garmentPhotoUrl} alt="Garment" fill sizes="200px" className="object-cover" />
+                      </button>
+                    </div>
+                  )}
                   {order.measurements && (
                     <div className="mt-2">
                       <p className="font-medium mb-1">Measurements:</p>
@@ -246,7 +212,7 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
                       <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${i === 0 ? "bg-navy" : "bg-border"}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge status={h.status} />
+                          <Badge status={h.status as OrderStatus} />
                           <span className="text-xs text-muted">{new Date(h.createdAt).toLocaleString()}</span>
                         </div>
                         {h.note && <p className="text-muted mt-0.5 text-sm">{h.note}</p>}
@@ -262,6 +228,19 @@ export const OrderDetailModal = ({ orderId, onClose }: Props) => {
         )}
       </Modal>
       {actionForm}
+
+      {/* Image preview overlay */}
+      {previewImg && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setPreviewImg(null)}>
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setPreviewImg(null)} className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white shadow-raised flex items-center justify-center z-10 hover:bg-gray-100 transition-colors">
+              <X className="w-4 h-4 text-navy" />
+            </button>
+            <Image src={previewImg} alt="Garment photo" width={800} height={800} className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl" />
+          </div>
+        </div>
+      )}
     </>
   );
 };
+

@@ -1,25 +1,19 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { PageLoader } from "@/components/ui/page-loader";
+import { Pagination } from "@/components/ui/pagination";
 import { ClickableRow } from "@/components/admin/clickable-row";
 import { OrderDetailModal } from "@/components/admin/order-detail-modal";
+import { useAdminOrders } from "@/lib/hooks/use-api";
+import { Search } from "lucide-react";
 import type { OrderStatus } from "@/lib/types";
-
-type Order = {
-  id: string;
-  orderNumber: string;
-  serviceType: string;
-  status: string;
-  totalAmount: number;
-  createdAt: string;
-  user: { name: string };
-};
 
 const STATUSES = [
   "", "PENDING_PAYMENT", "PAYMENT_VERIFIED", "PROCESSING",
@@ -31,21 +25,38 @@ const OrdersContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filter = searchParams.get("status") ?? "";
-  const [orders, setOrders] = useState<Order[]>([]);
+  const searchQuery = searchParams.get("q") ?? "";
+  const page = parseInt(searchParams.get("page") ?? "1");
+
+  const { data: result, isLoading } = useAdminOrders(filter, searchQuery, page);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (session?.user?.role !== "ADMIN") return;
-    const url = filter ? `/api/admin/orders?status=${filter}` : "/api/admin/orders";
-    fetch(url).then((r) => r.json()).then(setOrders).catch(() => {});
-  }, [session, filter]);
+  const orders = result?.data ?? [];
+  const totalPages = result?.pagination?.totalPages ?? 1;
+  const total = result?.pagination?.total ?? 0;
 
   if (!session || session.user?.role !== "ADMIN") return null;
 
+  const navTo = (updates: Record<string, string | undefined>) => {
+    const p = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === undefined || value === "" || value === "1") p.delete(key);
+      else p.set(key, value);
+    }
+    router.push(`/admin/orders?${p.toString()}`);
+  };
+
   return (
     <div>
-      <div className="mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-semibold text-foreground">Orders</h1>
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/60" />
+          <input type="text" defaultValue={searchQuery}
+            onKeyDown={(e) => { if (e.key === "Enter") navTo({ q: (e.target as HTMLInputElement).value || undefined, page: "1" }); }}
+            placeholder="Search by order # or customer..."
+            className="w-full pl-9 pr-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/30 transition-colors" />
+        </div>
       </div>
 
       <div className="flex gap-1.5 flex-wrap">
@@ -63,10 +74,12 @@ const OrdersContent = () => {
       </div>
 
       <Card className="overflow-x-auto mt-4">
-        {orders.length === 0 ? (
+        {isLoading ? (
+          <PageLoader />
+        ) : orders.length === 0 ? (
           <EmptyState icon="search" title="No orders found"
-            message={filter ? `No orders with status "${filter.replace(/_/g, " ")}".` : "No orders have been placed yet."}
-            action={filter ? { label: "Clear filter", onClick: () => router.push("/admin/orders") } : undefined}
+            message={filter ? `No orders with status "${filter.replace(/_/g, " ")}".` : searchQuery ? `No orders matching "${searchQuery}".` : "No orders have been placed yet."}
+            action={filter || searchQuery ? { label: "Clear filter", onClick: () => router.push("/admin/orders") } : undefined}
           />
         ) : (
           <table className="w-full">
@@ -97,6 +110,9 @@ const OrdersContent = () => {
           </table>
         )}
       </Card>
+
+      <Pagination page={page} totalPages={totalPages} total={total}
+        onPageChange={(p) => navTo({ page: String(p) })} />
 
       <OrderDetailModal orderId={selectedId} onClose={() => setSelectedId(null)} />
     </div>

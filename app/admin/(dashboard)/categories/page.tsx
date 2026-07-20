@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { PageLoader } from "@/components/ui/page-loader";
 import { useToast } from "@/lib/contexts/toast";
-import { Pencil, Plus, Ruler, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Ruler, Search, Trash2, X } from "lucide-react";
 
 type Category = { id: number; name: string; slug: string; sizeGuideUrl?: string };
 
@@ -27,6 +27,14 @@ const CategoriesContent = () => {
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = useMemo(
+    () => searchQuery.trim()
+      ? categories.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.slug.toLowerCase().includes(searchQuery.toLowerCase()))
+      : categories,
+    [categories, searchQuery],
+  );
 
   const fetchCategories = () => {
     fetch("/api/admin/categories")
@@ -102,16 +110,27 @@ const CategoriesContent = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-semibold text-foreground">Categories</h1>
-        <Button onClick={() => { resetForm(); setAddOpen(true); }}>
-          <Plus className="w-4 h-4 mr-1" /> Add Category
-        </Button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted/60" />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search categories..."
+              className="w-full pl-9 pr-3 py-2 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted/50 focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy/30 transition-colors" />
+          </div>
+          <Button onClick={() => { resetForm(); setAddOpen(true); }} className="shrink-0">
+            <Plus className="w-4 h-4 mr-1" /> Add Category
+          </Button>
+        </div>
       </div>
 
       <Card className="overflow-x-auto">
-        {categories.length === 0 ? (
-          <EmptyState icon="inbox" title="No categories yet" message="Create your first category to organize products." />
+        {filtered.length === 0 ? (
+          <EmptyState icon="inbox" title="No categories found"
+            message={searchQuery ? `No categories matching "${searchQuery}".` : "Create your first category to organize products."}
+            action={searchQuery ? { label: "Clear search", onClick: () => setSearchQuery("") } : undefined}
+          />
         ) : (
           <table className="w-full">
             <thead>
@@ -123,7 +142,7 @@ const CategoriesContent = () => {
               </tr>
             </thead>
             <tbody>
-              {categories.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c.id} className="border-b border-border/50 text-sm hover:bg-surface/50 transition-colors">
                   <td className="px-4 py-3.5 font-medium">{c.name}</td>
                   <td className="px-4 py-3.5 text-muted">{c.slug}</td>
